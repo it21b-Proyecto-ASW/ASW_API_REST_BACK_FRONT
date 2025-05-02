@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Issue List</title>
+
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="/static/CSS/IssueList.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="brand">Issue Tracker</div>
+
+        <ul class="nav-links">
+            <li><a href="IssueList.html">Issues</a></li>
+            <li><a href="Settings.html">Settings</a></li>
+        </ul>
+
+        <ul class="nav-links right">
+            <li><a href="UserList.html">User List</a></li>
+            <li><a id="profile-link" href="#">User</a></li>
+            <li><button id="logout-btn" class="link-btn">Logout</button></li>
+        </ul>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="container">
+        <h1>Issue List</h1>
+
+        <!-- Buscador -->
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search" />
+            <button id="search-btn" class="btn primary"><i class="bi bi-search"></i></button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <select id="filter-type" class="select"><option value="" disabled selected hidden>Tipo</option></select>
+            <select id="filter-state" class="select"><option value="" disabled selected hidden>Estado</option></select>
+            <select id="filter-prio" class="select"><option value="" disabled selected hidden>Prioridad</option></select>
+            <select id="filter-sev" class="select"><option value="" disabled selected hidden>Severidad</option></select>
+            <button id="filter-btn" class="btn primary filter-button">Filtrar</button>
+        </div>
+
+        <!-- Lista de issues -->
+        <div id="issue-list" class="list"></div>
+
+        <!-- Acciones inferiores -->
+        <div class="actions">
+            <button id="new-issue-btn" class="btn primary">New Issue</button>
+            <a href="Comment.html" class="btn secondary">Comments</a>
+        </div>
+    </main>
+
+    <!-- MODAL NUEVO ISSUE -->
+    <div id="issue-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close"><i class="bi bi-x-lg"></i></button>
+            <h2>Crear nuevo issue</h2>
+
+            <form id="issue-form">
+                <label>
+                    Subject
+                    <input type="text" id="subject" required>
+                </label>
+
+                <label>
+                    Description
+                    <textarea id="description" rows="3" required></textarea>
+                </label>
+
+                <div class="modal-row">
+                    <label class="d-flex col">
+                        Creation Date
+                        <input type="date" id="creationDate" required>
+                    </label>
+
+                    <label class="d-flex col">
+                        Deadline
+                        <input type="date" id="deadline">
+                    </label>
+                </div>
+
+                <div class="modal-row">
+                    <label>
+                        Status
+                        <select id="estado"></select>
+                    </label>
+
+                    <label>
+                        Type
+                        <select id="tipo"></select>
+                    </label>
+
+                    <label>
+                        Priority
+                        <select id="prioridad"></select>
+                    </label>
+
+                    <label>
+                        Severity
+                        <select id="severidad"></select>
+                    </label>
+                </div>
+
+                <div class="modal-row">
+
+                    <label>
+                        Assigned To
+                        <select id="assignedUser"></select>
+                    </label>
+
+                    <label>
+                        Watchers
+                        <select id="watcherUser"></select>
+                    </label>
+                </div>
+
+                    <button type="submit" class="btn primary wide button-save-issue">Crear</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/JS/IssueList.js"></script>
+</body>
+</html>

@@ -7,6 +7,8 @@ from rest_framework.response import Response
 @api_view(['POST'])
 def create_issue(request):
     """Crear un nuevo issue."""
+
+
     return Response({"message": "ok"})
 
 @api_view(['GET'])
