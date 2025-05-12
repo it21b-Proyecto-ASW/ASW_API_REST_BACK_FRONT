@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuració</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .config-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            background-color: #f8f9fa;
+        }
+        .add-form {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .delete-form {
+            background-color: #f8d7da;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="tittle">Configuració</h1>
+
+        <!-- Sección Tipus de Issues -->
+        <div class="config-section">
+            <h2>Tipus de issues</h2>
+
+            <div class="add-form">
+                <h4>Afegir nou tipus</h4>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" name="nombre" placeholder="Nom del tipus" required>
+                        <button type="submit" class="btn btn-primary" onclick="createTipus()">Afegir</button>
+                    </div>
+            </div>
+
+            <div class="delete-form">
+                <h4>Eliminar tipus</h4>
+                <form method="post" action="{% url 'delete_tipo' %}">
+                    <div class="mb-3">
+                        <select id="tipo_a_eliminar" class="select" required>
+                            <option value="">Selecciona un tipus a eliminar</option>
+                                <option value=""></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <select id="tipo_sustituto" class="form-select" required>
+                            <option value="">Selecciona un tipus de reemplaçament</option>
+                                <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                        </select>
+                        <small class="text-muted">Aquest tipus reemplaçarà l'eliminat en totes les issues</small>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sección Estats de Issues -->
+        <div class="config-section">
+            <h2>Estats de issues</h2>
+
+            <div class="add-form">
+                <h4>Afegir nou estat</h4>
+                <form method="post" action="{% url 'add_estado' %}">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="nombre" placeholder="Nom de l'estat" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Afegir</button>
+                </form>
+            </div>
+
+            <div class="delete-form">
+                <h4>Eliminar estat</h4>
+                <form method="post" action="{% url 'delete_estado' %}">
+                    <div class="mb-3">
+                        <select name="estado_a_eliminar" class="form-select" required>
+                            <option value="">Selecciona un estat a eliminar</option>
+                                <option value="{{ estado.id }}">{{ estado.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <select name="estado_sustituto" class="form-select" required>
+                            <option value="">Selecciona un estat de reemplaçament</option>
+                                <option value="{{ estado.id }}">{{ estado.nombre }}</option>
+                        </select>
+                        <small class="text-muted">Aquest estat reemplaçarà l'eliminat en totes les issues</small>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sección Prioritat dels Issues -->
+        <div class="config-section">
+            <h2>Prioritat dels issues</h2>
+
+            <div class="add-form">
+                <h4>Afegir nova prioritat</h4>
+                <form method="post" action="{% url 'add_prioridad' %}">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="nombre" placeholder="Nom de la prioritat" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Afegir</button>
+                </form>
+            </div>
+
+
+            <div class="delete-form">
+                <h4>Eliminar prioritat</h4>
+                <form method="post" action="{% url 'delete_prioridad' %}">
+                    <div class="mb-3">
+                        <select name="prioridad_a_eliminar" class="form-select" required>
+                            <option value="">Selecciona una prioritat a eliminar</option>
+                                <option value="{{ prioridad.id }}">{{ prioridad.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <select name="prioridad_sustituto" class="form-select" required>
+                            <option value="">Selecciona una prioritat de reemplaçament</option>
+                                <option value="{{ prioridad.id }}">{{ prioridad.nombre }}</option>
+                        </select>
+                        <small class="text-muted">Aquesta prioritat reemplaçarà l'eliminada en totes les issues</small>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sección Severitat dels Issues -->
+        <div class="config-section">
+            <h2>Severitat dels issues</h2>
+
+            <div class="add-form">
+                <h4>Afegir nova severitat</h4>
+                <form method="post" action="{% url 'add_severidad' %}">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="nombre" placeholder="Nom de la severitat" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Afegir</button>
+                </form>
+            </div>
+
+            <div class="delete-form">
+                <h4>Eliminar severitat</h4>
+                <form method="post" action="{% url 'delete_severidad' %}">
+                    <div class="mb-3">
+                        <select name="severidad_a_eliminar" class="form-select" required>
+                            <option value="">Selecciona una severitat a eliminar</option>
+                                <option value="{{ severidad.id }}">{{ severidad.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <select name="severidad_sustituto" class="form-select" required>
+                            <option value="">Selecciona una severitat de reemplaçament</option>
+                                <option value="{{ severidad.id }}">{{ severidad.nombre }}</option>
+                        </select>
+                        <small class="text-muted">Aquesta severitat reemplaçarà l'eliminada en totes les issues</small>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4 mb-4">
+        <a href="{% url 'issues' %}" class="btn btn-secondary">Volver a la lista de issues</a>
+    </div>
+
+    <script src="/static/JS/Settings.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Validación básica para formularios de eliminación
+    document.querySelectorAll('.delete-form form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const eliminar = this.querySelector('select[name$="_a_eliminar"]').value;
+            const sustituir = this.querySelector('select[name$="_sustituto"]').value;
+
+            if (eliminar === sustituir) {
+                e.preventDefault();
+                alert("No pots seleccionar el mateix element per a eliminar i reemplaçar");
+            }
+        });
+    });
+    </script>
+</body>
+</html>

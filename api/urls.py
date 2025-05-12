@@ -1,6 +1,7 @@
 # api/urls.py
 from django.urls import path
 from . import views
+from .views import *
 
 urlpatterns = [
     # ISSUES
@@ -22,8 +23,17 @@ urlpatterns = [
     path('users/<int:user_id>/profile/edit/', views.edit_user_profile),
 
     # SETTINGS
-    path('settings/', views.list_settings),
-    path('settings/create/', views.create_setting),
-    path('settings/<int:setting_id>/delete/', views.delete_setting),
+    path('settings/tipos', views.list_tipos),
+    path('settings/createtipo/', views.create_tipo),
+    path('settings/<int:setting_id>/deletetipo/', views.delete_tipo),
+    path('settings/estados', views.list_estados),
+    path('settings/createestado/', views.create_estado),
+    path('settings/<int:setting_id>/deleteestado/', views.delete_estado),
+    path('settings/prioridades', views.list_prioridades),
+    path('settings/createprioridad/', views.create_prioridad),
+    path('settings/<int:setting_id>/deleteprioridad/', views.delete_prioridad),
+    path('settings/severidades', views.list_severidades),
+    path('settings/createseveridad/', views.create_severidad),
+    path('settings/<int:setting_id>/deleteseveridad/', views.delete_severidad),
     path('settings/<int:setting_id>/edit/', views.edit_setting),
 ]
