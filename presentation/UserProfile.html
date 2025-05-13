@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="CSS/UserProfile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="avatar-container">
+                    <img id="user-avatar" src="https://via.placeholder.com/150" alt="User Avatar">
+                    <label for="avatar-upload" class="avatar-upload-label">
+                        <i class="fas fa-camera"></i>
+                        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                    </label>
+                </div>
+                <h1 id="username">Carles Farré</h1>
+                <p class="user-handle">@carlesf</p>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="open-issues-count">3</span>
+                        <span class="stat-label">Open</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="watched-count">5</span>
+                        <span class="stat-label">Watched</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="comments-count">14</span>
+                        <span class="stat-label">Comments</span>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-bio">
+                <p id="user-bio">Faculty member at the Department of Service and Information System Engineering, UPC - Barcelona Tech.</p>
+                <button id="edit-bio-btn" class="edit-btn">EDIT BIO</button>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="assigned-issues">Open Assigned Issues</button>
+                <button class="tab-btn" data-tab="watched-issues">Watched Issues</button>
+                <button class="tab-btn" data-tab="comments">Comments</button>
+            </div>
+
+            <div class="tab-content active" id="assigned-issues">
+                <div class="issues-header">
+                    <div class="sort-options">
+                        <select id="assigned-sort-by">
+                            <option value="type">Type</option>
+                            <option value="severity">Severity</option>
+                            <option value="priority">Priority</option>
+                            <option value="number">Issue #</option>
+                            <option value="status">Status</option>
+                            <option value="modified" selected>Modified</option>
+                        </select>
+                        <select id="assigned-sort-order">
+                            <option value="asc">Ascending</option>
+                            <option value="desc" selected>Descending</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="issues-list" id="assigned-issues-list">
+                    <!-- Issues will be loaded here -->
+                </div>
+            </div>
+
+            <div class="tab-content" id="watched-issues">
+                <div class="issues-header">
+                    <div class="sort-options">
+                        <select id="watched-sort-by">
+                            <option value="type">Type</option>
+                            <option value="severity">Severity</option>
+                            <option value="priority">Priority</option>
+                            <option value="number">Issue #</option>
+                            <option value="status">Status</option>
+                            <option value="modified" selected>Modified</option>
+                        </select>
+                        <select id="watched-sort-order">
+                            <option value="asc">Ascending</option>
+                            <option value="desc" selected>Descending</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="issues-list" id="watched-issues-list">
+                    <!-- Issues will be loaded here -->
+                </div>
+            </div>
+
+            <div class="tab-content" id="comments">
+                <div class="comments-list" id="comments-list">
+                    <!-- Comments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bio Edit Modal -->
+    <div class="modal" id="bio-modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Edit Bio</h2>
+            <textarea id="bio-textarea" rows="5"></textarea>
+            <button id="save-bio-btn">Save Changes</button>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
