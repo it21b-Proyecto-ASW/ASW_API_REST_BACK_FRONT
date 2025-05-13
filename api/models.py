@@ -3,6 +3,11 @@ from django.contrib.auth.models import User
 from django.utils.timezone import datetime
 from django.core.exceptions import ValidationError
 from rest_framework.exceptions import ValidationError
+import secrets
+from django.db import models
+from django.utils import timezone
+
+
 
 class TipoIssue(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
@@ -12,37 +17,43 @@ class TipoIssue(models.Model):
 
     def delete(self, *args, **kwargs):
         if TipoIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar el único tipo existente")
+            raise ValidationError("No se puede eliminar el unico tipo existente")
         super().delete(*args, **kwargs)
 
 
-# Create your models here.
 class User(models.Model):
-    nombre = models.CharField(max_length=20, unique=True)
-    biography = models.TextField()
-    numOpenIssues = models.Value(models.IntegerField)
-    numWatchedIssues = models.Value(models.IntegerField)
-    numComments = models.Value(models.IntegerField)
+    nombre           = models.CharField(max_length=20, unique=True)
+    biography        = models.TextField(blank=True)
+    photo            = models.ImageField(upload_to="profiles/", null=True, blank=True)
+    apikey           = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    numOpenIssues    = models.IntegerField(default=0)
+    numWatchedIssues = models.IntegerField(default=0)
+    numComments      = models.IntegerField(default=0)
+    
+    def save(self, *args, **kwargs):
+        
+        if not self.apikey:
+            self.apikey = secrets.token_hex(20)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre
 
     def delete(self, *args, **kwargs):
         if User.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar el único usuario existente")
+            raise ValidationError("No se puede eliminar el unico usuario existente")
         super().delete(*args, **kwargs)
 
+class ImageAttachment(models.Model):
+    file        = models.ImageField(upload_to='attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-class TipoIssue(models.Model):
-    nombre = models.CharField(max_length=20, unique=True)
+class IssueAttachment(models.Model):
+    issue       = models.ForeignKey("Issue", on_delete=models.CASCADE, related_name="attachments")
+    image       = models.ForeignKey(ImageAttachment, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.nombre
-
-    def delete(self, *args, **kwargs):
-        if TipoIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar el único tipo de issue existente")
-        super().delete(*args, **kwargs)
+    class Meta:
+        unique_together = ("issue", "image")
 
 
 class EstadoIssue(models.Model):
@@ -53,7 +64,7 @@ class EstadoIssue(models.Model):
 
     def delete(self, *args, **kwargs):
         if EstadoIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar el único estado de issue existente")
+            raise ValidationError("No se puede eliminar el unico estado de issue existente")
         super().delete(*args, **kwargs)
 
 
@@ -65,7 +76,7 @@ class PrioridadIssue(models.Model):
 
     def delete(self, *args, **kwargs):
         if PrioridadIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar la única prioridad de issue existente")
+            raise ValidationError("No se puede eliminar la unica prioridad de issue existente")
         super().delete(*args, **kwargs)
 
 
@@ -77,13 +88,13 @@ class SeveridadIssue(models.Model):
 
     def delete(self, *args, **kwargs):
         if SeveridadIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar la única severidad de issue existente")
+            raise ValidationError("No se puede eliminar la unica severidad de issue existente")
         super().delete(*args, **kwargs)
 
 class Issue(models.Model):
     nombre = models.CharField(max_length=20)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    assignedTo = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_issues')
+    assignedTo = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='assigned_issues')
     description = models.TextField()
     numIssue = models.IntegerField(unique=True)
     tipo = models.ForeignKey(TipoIssue, on_delete=models.CASCADE)
@@ -103,34 +114,4 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.content
-class EstadoIssue(models.Model):
-    nombre = models.CharField(max_length=40, unique=True)
 
-    def __str__(self):
-        return self.nombre
-    def delete(self, *args, **kwargs):
-        if EstadoIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar el único estado existente")
-        super().delete(*args, **kwargs)
-
-class PrioridadIssue(models.Model):
-    nombre = models.CharField(max_length=10, unique=True)
-
-    def __str__(self):
-        return self.nombre
-
-    def delete(self, *args, **kwargs):
-        if PrioridadIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar la única prioridad existente")
-        super().delete(*args, **kwargs)
-
-class SeveridadIssue(models.Model):
-    nombre = models.CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return self.nombre
-
-    def delete(self, *args, **kwargs):
-        if SeveridadIssue.objects.count() <= 1:
-            raise ValidationError("No se puede eliminar la única severidad existente")
-        super().delete(*args, **kwargs)

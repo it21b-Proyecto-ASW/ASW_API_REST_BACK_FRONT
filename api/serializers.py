@@ -1,11 +1,12 @@
 from rest_framework import serializers
-from .models import User, TipoIssue, EstadoIssue, PrioridadIssue, SeveridadIssue, Issue, Comment
+from .models import User, TipoIssue, EstadoIssue, PrioridadIssue, SeveridadIssue, Issue, Comment, ImageAttachment, IssueAttachment
 
 class UserSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(read_only=True)
     class Meta:
         model = User
-        fields = ['id', 'nombre', 'biography', 'numOpenIssues', 'numWatchedIssues', 'numComments']
-        read_only_fields = ['numOpenIssues', 'numWatchedIssues', 'numComments']
+        fields = ['id', 'nombre', 'biography', 'apikey', 'photo', 'numOpenIssues', 'numWatchedIssues', 'numComments']
+        read_only_fields = ['apikey','numOpenIssues', 'numWatchedIssues', 'numComments']
 
 class TipoIssueSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,3 +52,24 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['id', 'issue', 'author', 'content', 'dateModified']
+
+
+class UserWriteSerializer(serializers.ModelSerializer):
+    biography = serializers.CharField(required=False, allow_blank=True, default='')
+    photo     = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model  = User
+        fields = ['nombre', 'biography', 'photo']
+
+class ImageAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = ImageAttachment
+        fields = ['id', 'file', 'uploaded_at']
+
+class IssueAttachmentSerializer(serializers.ModelSerializer):
+    image = ImageAttachmentSerializer(read_only=True)
+
+    class Meta:
+        model  = IssueAttachment
+        fields = ['id', 'issue', 'image']

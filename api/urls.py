@@ -2,6 +2,13 @@
 from django.urls import path
 from . import views
 from .views import *
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(title="ASW API", default_version='v1'),
+    public=True,
+)
 
 urlpatterns = [
     # ISSUES
@@ -12,15 +19,17 @@ urlpatterns = [
     path('issues/<int:issue_id>/delete/', views.delete_issue),
     path('issues/assign/', views.assign_issue),
     path('issues/<int:issue_id>/file/add/', views.add_file_to_issue),
-    path('files/<int:file_id>/delete/', views.delete_file_from_issue),
+    path('attachments/<int:file_id>/delete/', views.delete_file_from_issue),
     path('issues/bulk-insert/', views.bulk_insert_issues),
     path('issues/<int:issue_id>/comment/', views.add_comment),
     path('issues/filter/', views.filter_issues),
 
     # USERS
+    path('users/create/', views.create_user),
     path('users/<int:user_id>/assign-apikey/', views.assign_apikey_to_user),
     path('users/<int:user_id>/profile/', views.user_profile),
     path('users/<int:user_id>/profile/edit/', views.edit_user_profile),
+    path('users/', views.list_users),
 
     # SETTINGS
     path('settings/tipos', views.list_tipos),
