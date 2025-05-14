@@ -97,10 +97,10 @@ class Issue(models.Model):
     assignedTo = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='assigned_issues')
     description = models.TextField()
     numIssue = models.IntegerField(unique=True)
-    tipo = models.ForeignKey(TipoIssue, on_delete=models.CASCADE)
-    estado = models.ForeignKey(EstadoIssue, on_delete=models.CASCADE)
-    prioridad = models.ForeignKey(PrioridadIssue, on_delete=models.CASCADE)
-    severidad = models.ForeignKey(SeveridadIssue, on_delete=models.CASCADE)
+    tipo = models.ForeignKey(TipoIssue, on_delete=models.CASCADE, null=True, blank=True)
+    estado = models.ForeignKey(EstadoIssue, on_delete=models.CASCADE, null=True, blank=True)
+    prioridad = models.ForeignKey(PrioridadIssue, on_delete=models.CASCADE, null=True, blank=True)
+    severidad = models.ForeignKey(SeveridadIssue, on_delete=models.CASCADE, null=True, blank=True)
     dateModified = models.DateTimeField()
 
     def __str__(self):

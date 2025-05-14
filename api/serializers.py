@@ -11,7 +11,6 @@ class UserSerializer(serializers.ModelSerializer):
 class TipoIssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoIssue
-        fields = '__all__'
         fields = ['id', 'nombre']
 
 class EstadoIssueSerializer(serializers.ModelSerializer):
@@ -33,16 +32,18 @@ class IssueSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     assignedTo = UserSerializer(read_only=True)
     tipo = TipoIssueSerializer(read_only=True)
-    estado = EstadoIssueSerializer(read_only=True)
-    prioridad = PrioridadIssueSerializer(read_only=True)
-    severidad = SeveridadIssueSerializer(read_only=True)
+    tipo      = serializers.PrimaryKeyRelatedField(queryset=TipoIssue.objects.all(), required=False, allow_null=True)
+    estado    = serializers.PrimaryKeyRelatedField(queryset=EstadoIssue.objects.all(), required=False, allow_null=True)
+    prioridad = serializers.PrimaryKeyRelatedField(queryset=PrioridadIssue.objects.all(), required=False, allow_null=True)
+    severidad = serializers.PrimaryKeyRelatedField(queryset=SeveridadIssue.objects.all(), required=False, allow_null=True)
+    deadline  = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = Issue
         fields = [
             'id', 'nombre', 'author', 'assignedTo', 'description',
             'numIssue', 'tipo', 'estado', 'prioridad', 'severidad',
-            'dateModified'
+            'dateModified', 'deadline',
         ]
 
 class CommentSerializer(serializers.ModelSerializer):
