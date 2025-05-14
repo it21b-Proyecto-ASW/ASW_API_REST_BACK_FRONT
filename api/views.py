@@ -7,7 +7,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
-
+from django.db import transaction
+from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import secrets
@@ -35,6 +36,7 @@ from .serializers import (
     UserWriteSerializer,
     ImageAttachmentSerializer,
     IssueAttachmentSerializer,
+    SettingSerializer,
 )
 
 
@@ -42,18 +44,37 @@ from .serializers import (
 #   Serializadores de escritura (ids en lugar de objetos anidados)
 # --------------------------------------------------------------------
 class IssueWriteSerializer(serializers.ModelSerializer):
+    watchers = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True, required=False
+    )
+    tipo = serializers.PrimaryKeyRelatedField(
+        queryset=TipoIssue.objects.all(), required=False, allow_null=True, default=None
+    )
+
+    estado = serializers.PrimaryKeyRelatedField(
+        queryset=EstadoIssue.objects.all(), required=False, allow_null=True, default=None
+    )
+
+    prioridad = serializers.PrimaryKeyRelatedField(
+        queryset=PrioridadIssue.objects.all(), required=False, allow_null=True, default=None
+    )
+
+    severidad = serializers.PrimaryKeyRelatedField(
+        queryset=SeveridadIssue.objects.all(), required=False, allow_null=True, default=None
+    )
+
     class Meta:
         model = Issue
         fields = [
             'nombre',
-            'author',        # id de User
-            'assignedTo',    # id de User
+            'author',        
+            'assignedTo',    
             'description',
-            'numIssue',
-            'tipo',          # id de TipoIssue
-            'estado',        # id de EstadoIssue
-            'prioridad',     # id de PrioridadIssue
-            'severidad',     # id de SeveridadIssue
+            'tipo',          
+            'estado',        
+            'prioridad',     
+            'severidad',     
+            'watchers',
         ]
 
 
@@ -61,6 +82,23 @@ class CommentWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['issue', 'author', 'content']
+
+
+def _update_m2m(issue, data):
+    """Aplica assignedTo y watchers sin sobrescribir si no vienen en la petición."""
+    if 'assignedTo' in data:
+        # sustituir completamente:
+        issue.assignedTo.set(data['assignedTo'])
+    if 'watchers' in data:
+        issue.watchers.set(data['watchers'])
+
+
+SETTING_MODEL_MAP = {
+    "tipo": TipoIssue,
+    "estado": EstadoIssue,
+    "prioridad": PrioridadIssue,
+    "severidad": SeveridadIssue,
+}
 
 
 # --------------------------------------------------------------------
@@ -76,10 +114,15 @@ class CommentWriteSerializer(serializers.ModelSerializer):
 def create_issue(request):
     """Crear un nuevo issue."""
     serializer = IssueWriteSerializer(data=request.data)
-    if serializer.is_valid():
+    serializer.is_valid(raise_exception=True)
+
+    with transaction.atomic():
         issue = serializer.save(dateModified=timezone.now())
-        return Response(IssueSerializer(issue).data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        _update_m2m(issue, serializer.validated_data)
+
+        issue.refresh_from_db()
+
+    return Response(IssueSerializer(issue).data, status=status.HTTP_201_CREATED)
 
 
 @swagger_auto_schema(
@@ -134,10 +177,14 @@ def edit_issue(request, issue_id: int):
     """Editar un issue existente."""
     issue = get_object_or_404(Issue, pk=issue_id)
     serializer = IssueWriteSerializer(issue, data=request.data, partial=True)
-    if serializer.is_valid():
+    serializer.is_valid(raise_exception=True)
+
+    with transaction.atomic():
         serializer.save(dateModified=timezone.now())
-        return Response(IssueSerializer(issue).data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        _update_m2m(issue, serializer.validated_data)
+        issue.refresh_from_db()
+
+    return Response(IssueSerializer(issue).data)
 
 
 @swagger_auto_schema(
@@ -150,6 +197,18 @@ def delete_issue(request, issue_id: int):
     """Eliminar un issue."""
     issue = get_object_or_404(Issue, pk=issue_id)
     issue.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@swagger_auto_schema(
+    method='delete',
+    responses={204: 'Deleted', 404: 'Not found'},
+    operation_summary="Eliminar un comentario por su ID",
+)
+@api_view(['DELETE'])
+def delete_comment(request, comment_id: int):
+    """Eliminar un comentario."""
+    comment = get_object_or_404(Comment, pk=comment_id)
+    comment.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -356,7 +415,11 @@ def assign_apikey_to_user(request, user_id: int):
     return Response(UserSerializer(user).data)
 
 # --- SETTINGS ---
-
+@swagger_auto_schema(
+    method='get',
+    responses={200: TipoIssueSerializer(many=True)},
+    operation_summary="Listar todos los tipos."
+)
 @api_view(['GET'])
 def list_tipos(request):
     """Listar todos los tipos."""
@@ -364,6 +427,13 @@ def list_tipos(request):
     serialTipo = TipoIssueSerializer(tipos, many=True)
     return Response(serialTipo.data)
 
+
+@swagger_auto_schema(
+    method='post',
+    request_body=TipoIssueSerializer,
+    responses={201: TipoIssueSerializer},
+    operation_summary="Anadir un tipo nuevo."
+)
 @api_view(['POST'])
 def create_tipo(request):
     """Anadir un tipo nuevo."""
@@ -378,6 +448,16 @@ def create_tipo(request):
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+
+@swagger_auto_schema(
+    method='delete',
+    manual_parameters=[
+        openapi.Parameter('setting_id', openapi.IN_PATH, description="ID del tipo", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: openapi.Response("Deleted")},
+    operation_summary="Eliminar un tipo."
+)
 @api_view(['DELETE'])
 def delete_tipo(request, setting_id):
     """Eliminar un tipo."""
@@ -388,6 +468,13 @@ def delete_tipo(request, setting_id):
     tipo.delete()
     return Response({"message": "ok"})
 
+
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: EstadoIssueSerializer(many=True)},
+    operation_summary="Listar todos los estados."
+)
 @api_view(['GET'])
 def list_estados(request):
     """Listar todos los estados."""
@@ -395,6 +482,13 @@ def list_estados(request):
     serialEstado = EstadoIssueSerializer(estados, many=True)
     return Response(serialEstado.data)
 
+
+@swagger_auto_schema(
+    method='post',
+    request_body=EstadoIssueSerializer,
+    responses={201: EstadoIssueSerializer},
+    operation_summary="Anadir un estado nuevo."
+)
 @api_view(['POST'])
 def create_estado(request):
     """Anadir un estado nuevo."""
@@ -409,6 +503,15 @@ def create_estado(request):
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+@swagger_auto_schema(
+    method='delete',
+    manual_parameters=[
+        openapi.Parameter('id', openapi.IN_PATH, description="ID del estado", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: openapi.Response("Deleted")},
+    operation_summary="Eliminar un estado."
+)
 @api_view(['DELETE'])
 def delete_estado(request, id):
     """Eliminar un estado."""
@@ -419,6 +522,12 @@ def delete_estado(request, id):
     estado.delete()
     return Response({"message": "ok"})
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: PrioridadIssueSerializer(many=True)},
+    operation_summary="Listar todas las prioridades."
+)
+
 @api_view(['GET'])
 def list_prioridades(request):
     """Listar todas las prioridades."""
@@ -426,6 +535,13 @@ def list_prioridades(request):
     serialPrio = PrioridadIssueSerializer(prioridades, many=True)
     return Response(serialPrio.data)
 
+
+@swagger_auto_schema(
+    method='post',
+    request_body=PrioridadIssueSerializer,
+    responses={201: PrioridadIssueSerializer},
+    operation_summary="Anadir una prioridad nueva."
+)
 @api_view(['POST'])
 def create_prioridad(request):
     """Anadir una prioridad."""
@@ -440,6 +556,14 @@ def create_prioridad(request):
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+@swagger_auto_schema(
+    method='delete',
+    manual_parameters=[
+        openapi.Parameter('setting_id', openapi.IN_PATH, description="ID de la prioridad", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: openapi.Response("Deleted")},
+    operation_summary="Eliminar una prioridad."
+)
 @api_view(['DELETE'])
 def delete_prioridad(request, setting_id):
     """Eliminar una prioridad."""
@@ -450,6 +574,11 @@ def delete_prioridad(request, setting_id):
     prioridad.delete()
     return Response({"message": "ok"})
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: SeveridadIssueSerializer(many=True)},
+    operation_summary="Listar todas las severidades."
+)
 @api_view(['GET'])
 def list_severidades(request):
     """Listar todas las severidades."""
@@ -457,6 +586,12 @@ def list_severidades(request):
     serialSev = SeveridadIssueSerializer(severidades, many=True)
     return Response(serialSev.data)
 
+@swagger_auto_schema(
+    method='post',
+    request_body=SeveridadIssueSerializer,
+    responses={201: SeveridadIssueSerializer},
+    operation_summary="Anadir una severidad nueva."
+)
 @api_view(['POST'])
 def create_severidad(request):
     """Anadir una severidad nueva."""
@@ -471,6 +606,15 @@ def create_severidad(request):
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+@swagger_auto_schema(
+    method='delete',
+    manual_parameters=[
+        openapi.Parameter('setting_id', openapi.IN_PATH, description="ID de la severidad", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: openapi.Response("Deleted")},
+    operation_summary="Eliminar una severidad."
+)
 @api_view(['DELETE'])
 def delete_severidad(request, setting_id):
     """Eliminar una severidad."""
@@ -481,7 +625,36 @@ def delete_severidad(request, setting_id):
     severidad.delete()
     return Response({"message": "ok"})
 
+
+
+@swagger_auto_schema(
+    method='put',
+    manual_parameters=[
+        openapi.Parameter('setting_type', openapi.IN_QUERY, description='tipo, estado, prioridad, severidad', type=openapi.TYPE_STRING),
+        openapi.Parameter('setting_id', openapi.IN_PATH, description='ID del setting', type=openapi.TYPE_INTEGER),
+    ],
+    request_body=SettingSerializer,
+    responses={200: openapi.Response("OK")},
+    operation_summary="Editar un setting existente."
+)
 @api_view(['PUT'])
 def edit_setting(request, setting_id):
-    """Editar un setting existente."""
-    return Response({"message": "ok"})
+    """Editar un setting existente (nombre)."""
+    setting_type = request.query_params.get("setting_type")
+
+    if setting_type not in SETTING_MODEL_MAP:
+        return Response({"error": "Tipo de setting invalido"}, status=400)
+
+    Model = SETTING_MODEL_MAP[setting_type]
+    try:
+        setting = Model.objects.get(pk=setting_id)
+    except Model.DoesNotExist:
+        return Response({"error": "Setting no encontrado"}, status=404)
+
+    serializer = SettingSerializer(setting, data=request.data, partial=True)
+    if serializer.is_valid():
+        setting.nombre = serializer.validated_data["nombre"]
+        setting.save()
+        return Response({"message": "Setting actualizado"}, status=200)
+    else:
+        return Response(serializer.errors, status=400)

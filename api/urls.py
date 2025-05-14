@@ -17,12 +17,13 @@ urlpatterns = [
     path('issues/', views.list_issues),
     path('issues/<int:issue_id>/edit/', views.edit_issue),
     path('issues/<int:issue_id>/delete/', views.delete_issue),
-    path('issues/assign/', views.assign_issue),
+    ##path('issues/assign/', views.assign_issue),
     path('issues/<int:issue_id>/file/add/', views.add_file_to_issue),
     path('attachments/<int:file_id>/delete/', views.delete_file_from_issue),
     path('issues/bulk-insert/', views.bulk_insert_issues),
     path('issues/<int:issue_id>/comment/', views.add_comment),
-    path('issues/filter/', views.filter_issues),
+    path('comments/delete/<int:comment_id>/', delete_comment, name='delete_comment'),
+    ##path('issues/filter/', views.filter_issues),
 
     # USERS
     path('users/create/', views.create_user),

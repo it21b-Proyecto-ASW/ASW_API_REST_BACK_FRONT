@@ -29,8 +29,8 @@ class SeveridadIssueSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre']
 
 class IssueSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    assignedTo = UserSerializer(read_only=True)
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
+    assignedTo = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     tipo = TipoIssueSerializer(read_only=True)
     tipo      = serializers.PrimaryKeyRelatedField(queryset=TipoIssue.objects.all(), required=False, allow_null=True)
     estado    = serializers.PrimaryKeyRelatedField(queryset=EstadoIssue.objects.all(), required=False, allow_null=True)
@@ -38,16 +38,24 @@ class IssueSerializer(serializers.ModelSerializer):
     severidad = serializers.PrimaryKeyRelatedField(queryset=SeveridadIssue.objects.all(), required=False, allow_null=True)
     deadline  = serializers.DateField(required=False, allow_null=True)
 
+    watchers = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True, required=False
+    )
+
+    assignedTo = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True, required=False
+    )
+
     class Meta:
         model = Issue
         fields = [
             'id', 'nombre', 'author', 'assignedTo', 'description',
-            'numIssue', 'tipo', 'estado', 'prioridad', 'severidad',
-            'dateModified', 'deadline',
+            'tipo', 'estado', 'prioridad', 'severidad',
+            'dateModified', 'deadline', 'watchers',
         ]
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
     issue = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
@@ -74,3 +82,6 @@ class IssueAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model  = IssueAttachment
         fields = ['id', 'issue', 'image']
+
+class SettingSerializer(serializers.Serializer):
+    nombre = serializers.CharField(max_length=40)
