@@ -7,7 +7,7 @@ from django.db.models.signals import post_save, post_delete
 def update_assigned_counts(sender, instance, action, pk_set, **kwargs):
     """Actualiza numOpenIssues cuando cambian los 'assignedTo'."""
     if action in ('post_add', 'post_remove', 'post_clear'):
-        # users afectados (pk_set vacío en post_clear, usamos all())
+        # users afectados (pk_set vacio en post_clear, usamos all())
         users = User.objects.filter(pk__in=pk_set) if pk_set else instance.assignedTo.all()
         for u in users:
             u.numOpenIssues = u.assigned_issues.count()

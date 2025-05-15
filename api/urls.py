@@ -22,6 +22,7 @@ urlpatterns = [
     path('attachments/<int:file_id>/delete/', views.delete_file_from_issue),
     path('issues/bulk-insert/', views.bulk_insert_issues),
     path('issues/<int:issue_id>/comment/', views.add_comment),
+    path('issues/<int:issue_id>/comments/', views.comments_by_issue),
     path('comments/delete/<int:comment_id>/', delete_comment, name='delete_comment'),
     ##path('issues/filter/', views.filter_issues),
 
@@ -31,6 +32,7 @@ urlpatterns = [
     path('users/<int:user_id>/profile/', views.user_profile),
     path('users/<int:user_id>/profile/edit/', views.edit_user_profile),
     path('users/', views.list_users),
+    path('users/<int:user_id>/comments/', views.comments_by_user),
 
     # SETTINGS
     path('settings/tipos', views.list_tipos),

@@ -127,6 +127,21 @@ def create_issue(request):
 
 @swagger_auto_schema(
     method='get',
+    responses={200: CommentSerializer(many=True), 404: 'Issue not found'},
+    operation_summary="Listar comentarios de un issue",
+)
+@api_view(['GET'])
+def comments_by_issue(request, issue_id: int):
+    """Devuelve todos los comentarios asociados a un issue."""
+    issue = get_object_or_404(Issue, pk=issue_id)
+    comments = Comment.objects.filter(issue=issue)
+    serializer = CommentSerializer(comments, many=True)
+    return Response(serializer.data)
+
+
+
+@swagger_auto_schema(
+    method='get',
     responses={200: IssueSerializer, 404: 'Not found'},
     operation_summary="Obtener informacion de un issue",
 )
@@ -145,6 +160,7 @@ def get_issue(request, issue_id: int):
         openapi.Parameter('estado', openapi.IN_QUERY, description="ID de EstadoIssue", type=openapi.TYPE_INTEGER),
         openapi.Parameter('severidad', openapi.IN_QUERY, description="ID de SeveridadIssue", type=openapi.TYPE_INTEGER),
         openapi.Parameter('tipo', openapi.IN_QUERY, description="ID de TipoIssue", type=openapi.TYPE_INTEGER),
+        openapi.Parameter('ordering', openapi.IN_QUERY, description="Campo por el que ordenar (ej: nombre, prioridad, severidad, etc.)", type=openapi.TYPE_STRING),
     ],
     responses={200: IssueSerializer(many=True)},
     operation_summary="Listar issues con filtros basicos",
@@ -162,6 +178,9 @@ def list_issues(request):
         value = request.query_params.get(field)
         if value:
             qs = qs.filter(**{f"{field}__id": value})
+    ordering = request.query_params.get('ordering')
+    if ordering:
+        qs = qs.order_by(ordering)
 
     return Response(IssueSerializer(qs, many=True).data)
 
@@ -413,6 +432,19 @@ def assign_apikey_to_user(request, user_id: int):
     user.apikey = secrets.token_hex(20)
     user.save(update_fields=['apikey'])
     return Response(UserSerializer(user).data)
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: CommentSerializer(many=True), 404: 'User not found'},
+    operation_summary="Listar comentarios de un usuario",
+)
+@api_view(['GET'])
+def comments_by_user(request, user_id: int):
+    """Devuelve todos los comentarios hechos por un usuario."""
+    user = get_object_or_404(User, pk=user_id)
+    comments = Comment.objects.filter(author=user)
+    serializer = CommentSerializer(comments, many=True)
+    return Response(serializer.data)
 
 # --- SETTINGS ---
 @swagger_auto_schema(
