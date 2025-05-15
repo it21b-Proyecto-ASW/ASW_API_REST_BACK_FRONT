@@ -4,10 +4,11 @@ from rest_framework.exceptions import ValidationError
 # Create your models here.
 class User(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
-    biography = models.TextField()
-    numOpenIssues = models.Value(models.IntegerField)
-    numWatchedIssues = models.Value(models.IntegerField)
-    numComments = models.Value(models.IntegerField)
+    biography = models.TextField(blank=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True) #falta definir path donde guardar las fotos
+    numOpenIssues = models.IntegerField(default=0)
+    numWatchedIssues = models.IntegerField(default=0)
+    numComments = models.IntegerField(default=0)
 
     def __str__(self):
         return self.nombre

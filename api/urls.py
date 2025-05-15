@@ -20,6 +20,11 @@ urlpatterns = [
     path('users/<int:user_id>/assign-apikey/', views.assign_apikey_to_user),
     path('users/<int:user_id>/profile/', views.user_profile),
     path('users/<int:user_id>/profile/edit/', views.edit_user_profile),
+    path('users/<int:user_id>/', views.get_user_info, name='user-info'),
+    path('users/<int:user_id>/issues/', views.get_user_issues, name='user-issues'),
+    path('users/<int:user_id>/comments/', views.get_user_comments, name='user-comments'),
+    path('users/<int:user_id>/update-avatar/', views.update_avatar, name='update-avatar'),
+    path('users/<int:user_id>/update-biography/', views.update_biography, name='update-biography'),
 
     # SETTINGS
     path('settings/', views.list_settings),
