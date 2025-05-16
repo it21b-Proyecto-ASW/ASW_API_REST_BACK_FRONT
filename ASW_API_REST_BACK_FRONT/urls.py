@@ -33,7 +33,7 @@ schema_view = get_schema_view(
         description="Documentacion de todos los endpoints de la API",
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=[permissions.AllowAny],
 )
 
 urlpatterns = [
@@ -44,4 +44,4 @@ urlpatterns = [
     path('Settings/', settings_list_view),
 
 ]
-urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'presentation'))
+#urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'presentation'))
