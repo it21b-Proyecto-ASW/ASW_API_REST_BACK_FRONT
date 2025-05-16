@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: your-app-name
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application --workers 4
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
