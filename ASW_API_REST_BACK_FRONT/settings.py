@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'api',
     'rest_framework',
     'drf_yasg',
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -139,3 +141,11 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': None,  # Elimina el enlace de logout
     'USE_SESSION_AUTH': False,  # Desactiva la autenticación por sesión
 }
+
+# Configuración CORS
+CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo/testing - ajusta para producción
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://editor.swagger.io",
+    "http://localhost:8000",  # Opcional: para desarrollo local
+]
