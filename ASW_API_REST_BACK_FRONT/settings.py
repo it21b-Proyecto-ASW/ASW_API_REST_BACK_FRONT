@@ -117,3 +117,24 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'presentation'),
 ]
+
+
+# Configuración de Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Permite acceso sin autenticación
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],  # Elimina cualquier autenticación por defecto
+}
+
+# Configuración de drf-yasg (Swagger)
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
+            'type': 'basic'
+        }
+    },
+    'LOGIN_URL': None,  # Elimina el enlace de login
+    'LOGOUT_URL': None,  # Elimina el enlace de logout
+    'USE_SESSION_AUTH': False,  # Desactiva la autenticación por sesión
+}
