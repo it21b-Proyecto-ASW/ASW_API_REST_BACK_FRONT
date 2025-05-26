@@ -4,32 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuració</title>
+    <link rel="stylesheet" href="/static/CSS/Settings.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .config-section {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.5rem;
-            background-color: #f8f9fa;
-        }
-        .add-form {
-            background-color: #e9ecef;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .delete-form {
-            background-color: #f8d7da;
-            padding: 1rem;
-            border-radius: 0.5rem;
-        }
-        .list-group-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    </style>
 </head>
 <body>
     <div class="container py-4">
@@ -42,29 +18,26 @@
             <div class="add-form">
                 <h4>Afegir nou tipus</h4>
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" name="nombre" placeholder="Nom del tipus" required>
-                        <button type="submit" class="btn btn-primary" onclick="createTipus()">Afegir</button>
+                        <input id="nom_tipo" type="text" class="form-control" name="nombre" placeholder="Nom del tipus" required>
+                        <button type="submit" class="btn btn-primary" onclick="crearTipo()">Afegir</button>
                     </div>
             </div>
 
+            <!-- delete tipus -->
             <div class="delete-form">
                 <h4>Eliminar tipus</h4>
-                <form method="post" action="{% url 'delete_tipo' %}">
                     <div class="mb-3">
-                        <select id="tipo_a_eliminar" class="select" required>
+                        <select id="tipo_a_eliminar" class="form-select" required>
                             <option value="">Selecciona un tipus a eliminar</option>
-                                <option value=""></option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <select id="tipo_sustituto" class="form-select" required>
+                        <select id="tipo_sustituto" class="form-select" >
                             <option value="">Selecciona un tipus de reemplaçament</option>
-                                <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
                         </select>
                         <small class="text-muted">Aquest tipus reemplaçarà l'eliminat en totes les issues</small>
                     </div>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
+                    <button type="submit" class="btn btn-danger" onclick="eliminarTipo()">Eliminar</button>
             </div>
         </div>
 
@@ -74,32 +47,26 @@
 
             <div class="add-form">
                 <h4>Afegir nou estat</h4>
-                <form method="post" action="{% url 'add_estado' %}">
                     <div class="mb-3">
-                        <input type="text" class="form-control" name="nombre" placeholder="Nom de l'estat" required>
+                        <input id="nom_estado" type="text" class="form-control" name="nombre" placeholder="Nom de l'estat" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Afegir</button>
-                </form>
+                    <button type="submit" class="btn btn-primary" onclick="crearEstado()">Afegir</button>
             </div>
 
             <div class="delete-form">
                 <h4>Eliminar estat</h4>
-                <form method="post" action="{% url 'delete_estado' %}">
                     <div class="mb-3">
-                        <select name="estado_a_eliminar" class="form-select" required>
+                        <select id="estado_a_eliminar" class="form-select" required>
                             <option value="">Selecciona un estat a eliminar</option>
-                                <option value="{{ estado.id }}">{{ estado.nombre }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <select name="estado_sustituto" class="form-select" required>
+                        <select id="estado_sustituto" class="form-select" required>
                             <option value="">Selecciona un estat de reemplaçament</option>
-                                <option value="{{ estado.id }}">{{ estado.nombre }}</option>
                         </select>
                         <small class="text-muted">Aquest estat reemplaçarà l'eliminat en totes les issues</small>
                     </div>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
+                    <button type="submit" class="btn btn-danger" onclick="eliminarEstado()">Eliminar</button>
             </div>
         </div>
 
@@ -109,33 +76,26 @@
 
             <div class="add-form">
                 <h4>Afegir nova prioritat</h4>
-                <form method="post" action="{% url 'add_prioridad' %}">
                     <div class="mb-3">
-                        <input type="text" class="form-control" name="nombre" placeholder="Nom de la prioritat" required>
+                        <input id="nom_prio" type="text" class="form-control" name="nombre" placeholder="Nom de la prioritat" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Afegir</button>
-                </form>
+                    <button type="submit" class="btn btn-primary" onclick="crearPrioridad()">Afegir</button>
             </div>
-
 
             <div class="delete-form">
                 <h4>Eliminar prioritat</h4>
-                <form method="post" action="{% url 'delete_prioridad' %}">
                     <div class="mb-3">
-                        <select name="prioridad_a_eliminar" class="form-select" required>
+                        <select id="prioridad_a_eliminar" class="form-select" required>
                             <option value="">Selecciona una prioritat a eliminar</option>
-                                <option value="{{ prioridad.id }}">{{ prioridad.nombre }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <select name="prioridad_sustituto" class="form-select" required>
+                        <select id="prioridad_sustituta" class="form-select" required>
                             <option value="">Selecciona una prioritat de reemplaçament</option>
-                                <option value="{{ prioridad.id }}">{{ prioridad.nombre }}</option>
                         </select>
                         <small class="text-muted">Aquesta prioritat reemplaçarà l'eliminada en totes les issues</small>
                     </div>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
+                    <button type="submit" class="btn btn-danger" onclick="eliminarPrioridad()">Eliminar</button>
             </div>
         </div>
 
@@ -145,31 +105,26 @@
 
             <div class="add-form">
                 <h4>Afegir nova severitat</h4>
-                <form method="post" action="{% url 'add_severidad' %}">
                     <div class="mb-3">
-                        <input type="text" class="form-control" name="nombre" placeholder="Nom de la severitat" required>
+                        <input id="nom_sev" type="text" class="form-control" name="nombre" placeholder="Nom de la severitat" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Afegir</button>
-                </form>
+                    <button type="submit" class="btn btn-primary" onclick="crearSeveridad()">Afegir</button>
             </div>
 
             <div class="delete-form">
                 <h4>Eliminar severitat</h4>
-                <form method="post" action="{% url 'delete_severidad' %}">
                     <div class="mb-3">
-                        <select name="severidad_a_eliminar" class="form-select" required>
+                        <select id="severidad_a_eliminar" class="form-select" required>
                             <option value="">Selecciona una severitat a eliminar</option>
-                                <option value="{{ severidad.id }}">{{ severidad.nombre }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <select name="severidad_sustituto" class="form-select" required>
+                        <select id="severidad_sustituta" class="form-select" required>
                             <option value="">Selecciona una severitat de reemplaçament</option>
-                                <option value="{{ severidad.id }}">{{ severidad.nombre }}</option>
                         </select>
                         <small class="text-muted">Aquesta severitat reemplaçarà l'eliminada en totes les issues</small>
                     </div>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                    <button type="submit" class="btn btn-danger" onclick="eliminarSeveridad()">Eliminar</button>
                 </form>
             </div>
         </div>
@@ -180,21 +135,5 @@
     </div>
 
     <script src="/static/JS/Settings.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    // Validación básica para formularios de eliminación
-    document.querySelectorAll('.delete-form form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const eliminar = this.querySelector('select[name$="_a_eliminar"]').value;
-            const sustituir = this.querySelector('select[name$="_sustituto"]').value;
-
-            if (eliminar === sustituir) {
-                e.preventDefault();
-                alert("No pots seleccionar el mateix element per a eliminar i reemplaçar");
-            }
-        });
-    });
-    </script>
 </body>
 </html>
