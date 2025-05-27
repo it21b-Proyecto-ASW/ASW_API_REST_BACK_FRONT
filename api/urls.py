@@ -33,6 +33,8 @@ urlpatterns = [
     path('users/<int:user_id>/profile/edit/', views.edit_user_profile),
     path('users/', views.list_users),
     path('users/<int:user_id>/comments/', views.comments_by_user),
+    path('users/<int:user_id>/assigned_issues/', views.get_assigned_issues),
+    path('users/<int:user_id>/watched_issues/', views.get_watched_issues),
 
     # SETTINGS
     path('settings/tipos', views.list_tipos),
