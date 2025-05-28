@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Configuration
+    const API_BASE_URL = 'http://localhost:8000/api';
+    const USER_ID = 1; // Hardcoded as requested
+
     // DOM elements
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -10,6 +14,150 @@ document.addEventListener('DOMContentLoaded', function() {
     const userBio = document.getElementById('user-bio');
     const avatarUpload = document.getElementById('avatar-upload');
     const userAvatar = document.getElementById('user-avatar');
+    const username = document.getElementById('username');
+    const userHandle = document.getElementById('user-handle');
+
+    // Global data storage
+    let userData = null;
+    let assignedIssuesData = [];
+    let watchedIssuesData = [];
+    let commentsData = [];
+
+    // Initialize the page
+    init();
+
+    async function init() {
+        try {
+            await loadUserProfile();
+            await loadAssignedIssues();
+        } catch (error) {
+            console.error('Error initializing profile:', error);
+            showError('Failed to load user profile');
+        }
+    }
+
+    // API Functions
+    async function apiRequest(endpoint, options = {}) {
+        const url = `${API_BASE_URL}${endpoint}`;
+        const defaultOptions = {
+            headers: {
+                'Content-Type': 'application/json',
+                // Add authentication headers if needed
+                // 'Authorization': 'Basic ' + btoa('username:password')
+            }
+        };
+
+        const response = await fetch(url, { ...defaultOptions, ...options });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        // Handle 204 No Content responses
+        if (response.status === 204) {
+            return null;
+        }
+
+        return await response.json();
+    }
+
+    async function loadUserProfile() {
+        try {
+            userData = await apiRequest(`/users/${USER_ID}/profile/`);
+            updateUserProfile(userData);
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+            showError('Failed to load user profile');
+        }
+    }
+
+    async function loadAssignedIssues() {
+        try {
+            assignedIssuesData = await apiRequest(`/users/${USER_ID}/assigned_issues/`);
+            const sortBy = document.getElementById('assigned-sort-by').value;
+            const sortOrder = document.getElementById('assigned-sort-order').value;
+            const sortedIssues = sortIssues([...assignedIssuesData], sortBy, sortOrder);
+            renderIssues(sortedIssues, 'assigned-issues-list');
+
+            // Update stats
+            document.getElementById('open-issues-count').textContent = assignedIssuesData.length;
+        } catch (error) {
+            console.error('Error loading assigned issues:', error);
+            document.getElementById('assigned-issues-list').innerHTML = '<p>Error loading assigned issues</p>';
+        }
+    }
+
+    async function loadWatchedIssues() {
+        try {
+            watchedIssuesData = await apiRequest(`/users/${USER_ID}/watched_issues/`);
+            const sortBy = document.getElementById('watched-sort-by').value;
+            const sortOrder = document.getElementById('watched-sort-order').value;
+            const sortedIssues = sortIssues([...watchedIssuesData], sortBy, sortOrder);
+            renderIssues(sortedIssues, 'watched-issues-list');
+
+            // Update stats
+            document.getElementById('watched-count').textContent = watchedIssuesData.length;
+        } catch (error) {
+            console.error('Error loading watched issues:', error);
+            document.getElementById('watched-issues-list').innerHTML = '<p>Error loading watched issues</p>';
+        }
+    }
+
+    async function loadComments() {
+        try {
+            commentsData = await apiRequest(`/users/${USER_ID}/comments/`);
+            renderComments(commentsData);
+
+            // Update stats
+            document.getElementById('comments-count').textContent = commentsData.length;
+        } catch (error) {
+            console.error('Error loading comments:', error);
+            document.getElementById('comments-list').innerHTML = '<p>Error loading comments</p>';
+        }
+    }
+
+    async function updateUserBio(newBio) {
+        try {
+            const updateData = {
+                nombre: userData.nombre,
+                biography: newBio
+            };
+
+            const updatedUser = await apiRequest(`/users/${USER_ID}/profile/edit/`, {
+                method: 'POST',
+                body: JSON.stringify(updateData)
+            });
+
+            userData = updatedUser;
+            updateUserProfile(userData);
+            return true;
+        } catch (error) {
+            console.error('Error updating bio:', error);
+            showError('Failed to update bio');
+            return false;
+        }
+    }
+
+    // UI Update Functions
+    function updateUserProfile(user) {
+        username.textContent = user.nombre;
+        userHandle.textContent = `@${user.nombre.toLowerCase()}`;
+        userBio.textContent = user.biography || 'No bio available';
+
+        if (user.photo) {
+            userAvatar.src = user.photo;
+        }
+
+        // Update stats from API response
+        document.getElementById('open-issues-count').textContent = user.numOpenIssues || 0;
+        document.getElementById('watched-count').textContent = user.numWatchedIssues || 0;
+        document.getElementById('comments-count').textContent = user.numComments || 0;
+    }
+
+    function showError(message) {
+        // You can implement a more sophisticated error display
+        alert(message);
+    }
 
     // Tab switching functionality
     tabButtons.forEach(button => {
@@ -36,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Bio edit functionality
     editBioBtn.addEventListener('click', () => {
-        bioTextarea.value = userBio.textContent;
+        bioTextarea.value = userData?.biography || '';
         bioModal.style.display = 'block';
     });
 
@@ -44,20 +192,23 @@ document.addEventListener('DOMContentLoaded', function() {
         bioModal.style.display = 'none';
     });
 
-    saveBioBtn.addEventListener('click', () => {
-        userBio.textContent = bioTextarea.value;
-        bioModal.style.display = 'none';
-        // Here you would typically save to the server
+    saveBioBtn.addEventListener('click', async () => {
+        const newBio = bioTextarea.value;
+        const success = await updateUserBio(newBio);
+        if (success) {
+            bioModal.style.display = 'none';
+        }
     });
 
-    // Avatar upload functionality
+    // Avatar upload functionality (placeholder - you'd need to implement file upload)
     avatarUpload.addEventListener('change', function(e) {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
 
             reader.onload = function(event) {
                 userAvatar.src = event.target.result;
-                // Here you would typically upload to the server
+                // TODO: Implement actual file upload to server
+                console.log('Avatar upload would be implemented here');
             };
 
             reader.readAsDataURL(e.target.files[0]);
@@ -85,63 +236,18 @@ document.addEventListener('DOMContentLoaded', function() {
     watchedSortBy.addEventListener('change', loadWatchedIssues);
     watchedSortOrder.addEventListener('change', loadWatchedIssues);
 
-    // Initial load of assigned issues (default tab)
-    loadAssignedIssues();
-
-    // Functions to load data
-    function loadAssignedIssues() {
-        // Simulate API call to get assigned issues
-        // In a real app, you would call get_issue_list() and filter for assigned issues
-        const issues = getIssuesData().filter(issue => issue.assigned && issue.status !== 'closed');
-
-        const sortBy = assignedSortBy.value;
-        const sortOrder = assignedSortOrder.value;
-
-        const sortedIssues = sortIssues(issues, sortBy, sortOrder);
-        renderIssues(sortedIssues, 'assigned-issues-list');
-
-        // Update open issues count
-        document.getElementById('open-issues-count').textContent = issues.length;
-    }
-
-    function loadWatchedIssues() {
-        // Simulate API call to get watched issues
-        const issues = getIssuesData().filter(issue => issue.watched);
-
-        const sortBy = watchedSortBy.value;
-        const sortOrder = watchedSortOrder.value;
-
-        const sortedIssues = sortIssues(issues, sortBy, sortOrder);
-        renderIssues(sortedIssues, 'watched-issues-list');
-
-        // Update watched issues count
-        document.getElementById('watched-count').textContent = issues.length;
-    }
-
-    function loadComments() {
-        // Simulate API call to get comments
-        const comments = getCommentsData();
-
-        // Sort by date (newest first)
-        comments.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        renderComments(comments);
-
-        // Update comments count
-        document.getElementById('comments-count').textContent = comments.length;
-    }
-
+    // Utility Functions
     function sortIssues(issues, sortBy, sortOrder) {
         return issues.sort((a, b) => {
             let valueA, valueB;
 
             // Handle different sort criteria
-            if (sortBy === 'number') {
-                valueA = a.number;
-                valueB = b.number;
-            } else if (sortBy === 'modified') {
-                valueA = new Date(a.modified);
-                valueB = new Date(b.modified);
+            if (sortBy === 'id') {
+                valueA = a.id;
+                valueB = b.id;
+            } else if (sortBy === 'dateModified') {
+                valueA = new Date(a.dateModified);
+                valueB = new Date(b.dateModified);
             } else {
                 valueA = a[sortBy];
                 valueB = b[sortBy];
@@ -169,33 +275,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const issueElement = document.createElement('div');
             issueElement.className = 'issue-item';
 
-            // Determine status class
-            let statusClass = '';
-            if (issue.status.toLowerCase().includes('new')) {
-                statusClass = 'status-new';
-            } else if (issue.status.toLowerCase().includes('progress')) {
-                statusClass = 'status-in-progress';
-            } else if (issue.status.toLowerCase().includes('modified')) {
-                statusClass = 'status-modified';
+            // Determine status class based on estado
+            let statusClass = 'status-default';
+            if (issue.estado) {
+                // You might want to map estado IDs to status classes
+                statusClass = `status-${issue.estado}`;
             }
 
             issueElement.innerHTML = `
-                <div class="issue-title">#${issue.number} - ${issue.title}</div>
+                <div class="issue-title">#${issue.id} - ${issue.nombre}</div>
                 <div class="issue-meta">
                     <div class="issue-meta-item">
-                        <i class="fas fa-tag"></i> ${issue.type}
+                        <i class="fas fa-tag"></i> ${issue.tipo || 'N/A'}
                     </div>
                     <div class="issue-meta-item">
-                        <i class="fas fa-bolt"></i> ${issue.severity}
+                        <i class="fas fa-bolt"></i> ${issue.severidad || 'N/A'}
                     </div>
                     <div class="issue-meta-item">
-                        <i class="fas fa-flag"></i> ${issue.priority}
+                        <i class="fas fa-flag"></i> ${issue.prioridad || 'N/A'}
                     </div>
                     <div class="issue-meta-item">
-                        <span class="issue-status ${statusClass}">${issue.status}</span>
+                        <span class="issue-status ${statusClass}">${issue.estado || 'N/A'}</span>
                     </div>
                 </div>
-                <div class="issue-date">${formatDate(issue.modified)}</div>
+                <div class="issue-date">${formatDate(issue.dateModified)}</div>
             `;
 
             container.appendChild(issueElement);
@@ -211,16 +314,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Sort by date (newest first)
+        comments.sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified));
+
         comments.forEach(comment => {
             const commentElement = document.createElement('div');
             commentElement.className = 'comment-item';
 
             commentElement.innerHTML = `
                 <div class="comment-header">
-                    <a href="#issue-${comment.issueNumber}" class="comment-issue-link">#${comment.issueNumber} - ${comment.issueTitle}</a>
-                    <span class="comment-date">${formatDateTime(comment.date)}</span>
+                    <a href="#issue-${comment.issue}" class="comment-issue-link">#${comment.issue}</a>
+                    <span class="comment-date">${formatDateTime(comment.dateModified)}</span>
                 </div>
-                <div class="comment-text">${comment.text}</div>
+                <div class="comment-text">${comment.content}</div>
             `;
 
             container.appendChild(commentElement);
@@ -241,70 +347,5 @@ document.addEventListener('DOMContentLoaded', function() {
             hour: '2-digit',
             minute: '2-digit'
         });
-    }
-
-    // Mock data functions - in a real app, you would call get_issue_list() API
-    function getIssuesData() {
-        // This is mock data - replace with actual API call to get_issue_list()
-        return [
-            {
-                number: 1,
-                title: "TEST",
-                type: "T",
-                severity: "S",
-                priority: "P",
-                status: "In progress",
-                modified: "2025-03-06",
-                assigned: true,
-                watched: false
-            },
-            {
-                number: 2,
-                title: "Fix broken urls in main page",
-                type: "Bug",
-                severity: "Medium",
-                priority: "High",
-                status: "New",
-                modified: "2025-03-11",
-                assigned: true,
-                watched: true
-            },
-            {
-                number: 3,
-                title: "Nicer UX",
-                type: "Improvement",
-                severity: "Low",
-                priority: "Medium",
-                status: "Modified",
-                modified: "2025-03-11",
-                assigned: true,
-                watched: true
-            },
-            // Add more issues as needed
-        ];
-    }
-
-    function getCommentsData() {
-        // This is mock data - replace with actual API call
-        return [
-            {
-                issueNumber: 3,
-                issueTitle: "Nicer UX",
-                text: "No way, man!",
-                date: "2025-03-11T18:45:00"
-            },
-            {
-                issueNumber: 2,
-                issueTitle: "Fix broken uris in main page",
-                text: "It's trivial to implement.",
-                date: "2025-03-10T09:12:00"
-            },
-            {
-                issueNumber: 2,
-                issueTitle: "Fix broken uris in main page",
-                text: "It isn't too hard.",
-                date: "2025-03-09T20:43:00"
-            }
-        ];
     }
 });
