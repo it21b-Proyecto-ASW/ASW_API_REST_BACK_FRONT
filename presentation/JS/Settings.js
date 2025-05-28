@@ -150,6 +150,8 @@ async function eliminarTipo()
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
             alert("se ha eliminado correctamente");
+            document.getElementById("tipo_a_eliminar").remove(tipo);
+            document.getElementById("tipo_sustituto").remove(tipo);
         }
     } catch (err) {
         console.error("Error al eliminar:", err);
@@ -170,8 +172,6 @@ async function crearPrioridad()
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomP})
         }).then(res => res.json);
-        //limpiarselects(select1, select2);
-        //loadTipos();
         document.getElementById("nom_prio").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -195,6 +195,8 @@ async function eliminarPrioridad()
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
             alert("se ha eliminado correctamente");
+            document.getElementById("prioridad_a_eliminar").remove(prio);
+            document.getElementById("prioridad_sustituta").remove(prio);
         }
     } catch (err) {
         console.error("Error al eliminar:", err);
@@ -214,8 +216,6 @@ async function crearEstado()
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomE})
         }).then(res => res.json);
-        //limpiarselects(select1, select2);
-        //loadTipos();
         document.getElementById("nom_estado").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -229,7 +229,7 @@ async function eliminarEstado()
     try
     {
         var estado = document.getElementById("estado_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[prio].value;
+        var setting_id = document.getElementsByTagName("option")[estado].value;
         if (document.getElementById("estado_a_eliminar").options.length <= 2)
             alert("No se puede eliminar el último estado")
         else {
@@ -239,6 +239,8 @@ async function eliminarEstado()
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
             alert("se ha eliminado correctamente");
+            document.getElementById("estado_a_eliminar").remove(estado);
+            document.getElementById("estado_sustituto").remove(estado);
         }
     } catch (err) {
         console.error("Error al eliminar:", err);
@@ -259,8 +261,6 @@ async function crearSeveridad()
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomS})
         }).then(res => res.json);
-        //limpiarselects(select1, select2);
-        //loadTipos();
         document.getElementById("nom_sev").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -274,7 +274,8 @@ async function eliminarSeveridad()
     try
     {
         var sev = document.getElementById("severidad_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[prio].value;
+        var setting_id = document.getElementsByTagName("option")[sev].value;
+        console.log(setting_id.toString());
         if (document.getElementById("severidad_a_eliminar").options.length <= 2)
             alert("No se puede eliminar la última severidad")
         else {
@@ -283,7 +284,10 @@ async function eliminarSeveridad()
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
+
             alert("se ha eliminado correctamente");
+            document.getElementById("severidad_a_eliminar").remove(sev);
+            document.getElementById("severidad_sustituta").remove(sev);
         }
     } catch (err) {
         console.error("Error al eliminar:", err);
