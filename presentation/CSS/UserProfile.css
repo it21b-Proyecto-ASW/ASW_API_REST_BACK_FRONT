@@ -323,6 +323,35 @@ h1 {
     background-color: #45a049;
 }
 
+.user-selector {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    border: 1px solid #e1e1e1;
+}
+
+.user-selector label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.user-selector select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+.user-selector select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .container {

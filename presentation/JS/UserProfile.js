@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Configuration
     const API_BASE_URL = 'http://localhost:8000/api';
-    const USER_ID = 1; // Hardcoded as requested
 
     // DOM elements
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -16,18 +15,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const userAvatar = document.getElementById('user-avatar');
     const username = document.getElementById('username');
     const userHandle = document.getElementById('user-handle');
+    const userDropdown = document.getElementById('user-dropdown');
 
     // Global data storage
     let userData = null;
     let assignedIssuesData = [];
     let watchedIssuesData = [];
     let commentsData = [];
+    let allUsers = [];
 
     // Initialize the page
     init();
 
     async function init() {
         try {
+            // Load all users first
+            await loadAllUsers();
+
+            // Check if we have a user in session storage
+            const storedUserId = sessionStorage.getItem('user_id');
+
+            if (storedUserId) {
+                // Use stored user
+                userDropdown.value = storedUserId;
+            } else if (allUsers.length > 0) {
+                // Use first user as default
+                const firstUserId = allUsers[0].id;
+                userDropdown.value = firstUserId;
+
+                // Get and store API key for first user
+                await getAndStoreApiKey(firstUserId);
+            }
+
+            // Load profile for selected user
             await loadUserProfile();
             await loadAssignedIssues();
         } catch (error) {
@@ -36,13 +56,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // User Management Functions
+    async function loadAllUsers() {
+        try {
+            allUsers = await apiRequest('/users/');
+            populateUserDropdown(allUsers);
+        } catch (error) {
+            console.error('Error loading users:', error);
+            showError('Failed to load users');
+        }
+    }
+
+    function populateUserDropdown(users) {
+        userDropdown.innerHTML = '';
+
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.nombre;
+            userDropdown.appendChild(option);
+        });
+    }
+
+    async function getAndStoreApiKey(userId) {
+        try {
+            // Call the assign-apikey endpoint to get/generate an API key
+            const response = await apiRequest(`/users/${userId}/assign-apikey/`, {
+                method: 'POST'
+            });
+
+            // Store user ID and API key in session storage
+            sessionStorage.setItem('user_id', userId);
+            sessionStorage.setItem('apikey', response.apikey);
+
+            console.log(`User ID ${userId} and API key stored in session storage`);
+            return response.apikey;
+        } catch (error) {
+            console.error('Error getting API key:', error);
+            showError('Failed to get API key');
+            return null;
+        }
+    }
+
+    // Handle user selection change
+    userDropdown.addEventListener('change', async function() {
+        const selectedUserId = this.value;
+        if (!selectedUserId) return;
+
+        try {
+            // Get and store API key for selected user
+            await getAndStoreApiKey(selectedUserId);
+
+            // Reload user profile and data
+            await loadUserProfile();
+            await loadAssignedIssues();
+
+            // Reset active tab to assigned issues
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.querySelector('[data-tab="assigned-issues"]').classList.add('active');
+            document.getElementById('assigned-issues').classList.add('active');
+        } catch (error) {
+            console.error('Error changing user:', error);
+            showError('Failed to change user');
+        }
+    });
+
     // API Functions
     async function apiRequest(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
-                // Add authentication headers if needed
+                // Add basic authentication if needed for your API
                 // 'Authorization': 'Basic ' + btoa('username:password')
             }
         };
@@ -63,7 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadUserProfile() {
         try {
-            userData = await apiRequest(`/users/${USER_ID}/profile/`);
+            const userId = sessionStorage.getItem('user_id');
+            if (!userId) {
+                throw new Error('No user ID found in session storage');
+            }
+
+            userData = await apiRequest(`/users/${userId}/profile/`);
             updateUserProfile(userData);
         } catch (error) {
             console.error('Error loading user profile:', error);
@@ -73,7 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadAssignedIssues() {
         try {
-            assignedIssuesData = await apiRequest(`/users/${USER_ID}/assigned_issues/`);
+            const userId = sessionStorage.getItem('user_id');
+            if (!userId) {
+                throw new Error('No user ID found in session storage');
+            }
+
+            assignedIssuesData = await apiRequest(`/users/${userId}/assigned_issues/`);
             const sortBy = document.getElementById('assigned-sort-by').value;
             const sortOrder = document.getElementById('assigned-sort-order').value;
             const sortedIssues = sortIssues([...assignedIssuesData], sortBy, sortOrder);
@@ -89,7 +185,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadWatchedIssues() {
         try {
-            watchedIssuesData = await apiRequest(`/users/${USER_ID}/watched_issues/`);
+            const userId = sessionStorage.getItem('user_id');
+            if (!userId) {
+                throw new Error('No user ID found in session storage');
+            }
+
+            watchedIssuesData = await apiRequest(`/users/${userId}/watched_issues/`);
             const sortBy = document.getElementById('watched-sort-by').value;
             const sortOrder = document.getElementById('watched-sort-order').value;
             const sortedIssues = sortIssues([...watchedIssuesData], sortBy, sortOrder);
@@ -105,7 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadComments() {
         try {
-            commentsData = await apiRequest(`/users/${USER_ID}/comments/`);
+            const userId = sessionStorage.getItem('user_id');
+            if (!userId) {
+                throw new Error('No user ID found in session storage');
+            }
+
+            commentsData = await apiRequest(`/users/${userId}/comments/`);
             renderComments(commentsData);
 
             // Update stats
@@ -118,12 +224,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function updateUserBio(newBio) {
         try {
+            const userId = sessionStorage.getItem('user_id');
+            if (!userId) {
+                throw new Error('No user ID found in session storage');
+            }
+
             const updateData = {
                 nombre: userData.nombre,
                 biography: newBio
             };
 
-            const updatedUser = await apiRequest(`/users/${USER_ID}/profile/edit/`, {
+            const updatedUser = await apiRequest(`/users/${userId}/profile/edit/`, {
                 method: 'POST',
                 body: JSON.stringify(updateData)
             });
@@ -141,11 +252,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // UI Update Functions
     function updateUserProfile(user) {
         username.textContent = user.nombre;
-        userHandle.textContent = `@${user.nombre.toLowerCase()}`;
+        userHandle.textContent = `@${user.nombre.toLowerCase().replace(/\s+/g, '')}`;
         userBio.textContent = user.biography || 'No bio available';
 
         if (user.photo) {
             userAvatar.src = user.photo;
+        } else {
+            userAvatar.src = 'https://via.placeholder.com/150';
         }
 
         // Update stats from API response
