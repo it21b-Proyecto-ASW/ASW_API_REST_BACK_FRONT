@@ -30,12 +30,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 //leer tipos
 async function loadTipos() {
     try {
-
         const tipos = await Promise.resolve(fetch(api_getTipos).then(r => r.json()));
         console.log(tipos);
         fillSelect("#tipo_a_eliminar", tipos, "nombre", "id");
         fillSelect("#tipo_sustituto", tipos, "nombre", "id");
-
     } catch (err) {
         console.error("Error cargando filtros:", err);
     }
@@ -49,14 +47,6 @@ function fillSelect(selectSel, data, labelKey, valueKey) {
         opt.textContent = (item)[labelKey];
         select.appendChild(opt);
     });
-}
-
-function addToSelect(selectSel, name)
-{
-    const select = $(selectSel);
-    const opt = create("option");
-    opt.textContent = name;
-    select.appendChild(opt);
 }
 
 function limpiarselects(sele1, sele2)
@@ -118,16 +108,12 @@ async function crearTipo()
 {
     try{
         var nomT = document.getElementById("nom_tipo").value;
-        var select1 = document.getElementById("tipo_a_eliminar");
-        var select2 = document.getElementById("tipo_sustituto");
         const res = await fetch("http://127.0.0.1:8000/api/settings/createtipo/",
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomT})
         }).then(res => res.json);
-        //limpiarselects(select1, select2);
-        //loadTipos();
         document.getElementById("nom_tipo").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -139,9 +125,9 @@ async function eliminarTipo()
 {
     try
     {
-        var tipo = document.getElementById("tipo_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[tipo].value;
-        if (document.getElementById("tipo_a_eliminar").options.length <= 2)
+        var tipo = document.getElementById("tipo_a_eliminar").options.selectedIndex;
+        var setting_id = document.getElementById("tipo_a_eliminar").options.item(tipo).value;
+        if (document.getElementById("tipo_a_eliminar").options.length <= 1)
             alert("No se puede eliminar el último tipo")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deletetipo/`,
@@ -158,7 +144,6 @@ async function eliminarTipo()
     }
 }
 
-
 //crear prioridad
 async function crearPrioridad()
 {
@@ -172,6 +157,7 @@ async function crearPrioridad()
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomP})
         }).then(res => res.json);
+
         document.getElementById("nom_prio").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -184,9 +170,9 @@ async function eliminarPrioridad()
 {
     try
     {
-        var prio = document.getElementById("prioridad_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[prio].value;
-        if (document.getElementById("prioridad_a_eliminar").options.length <= 2)
+        var prio = document.getElementById("prioridad_a_eliminar").options.selectedIndex;
+        var setting_id = document.getElementById("prioridad_a_eliminar").options.item(prio).value;
+        if (document.getElementById("prioridad_a_eliminar").options.length <= 1)
             alert("No se puede eliminar la última prioridad")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deleteprioridad/`,
@@ -194,7 +180,7 @@ async function eliminarPrioridad()
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
-            alert("se ha eliminado correctamente");
+            alert("Se ha eliminado correctamente");
             document.getElementById("prioridad_a_eliminar").remove(prio);
             document.getElementById("prioridad_sustituta").remove(prio);
         }
@@ -228,9 +214,9 @@ async function eliminarEstado()
 {
     try
     {
-        var estado = document.getElementById("estado_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[estado].value;
-        if (document.getElementById("estado_a_eliminar").options.length <= 2)
+        var estado = document.getElementById("estado_a_eliminar").options.selectedIndex;
+        var setting_id = document.getElementById("estado_a_eliminar").options.item(estado).value;
+        if (document.getElementById("estado_a_eliminar").options.length <= 1)
             alert("No se puede eliminar el último estado")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deleteestado/`,
@@ -246,7 +232,6 @@ async function eliminarEstado()
         console.error("Error al eliminar:", err);
     }
 }
-
 
 //crear severidad
 async function crearSeveridad()
@@ -273,9 +258,8 @@ async function eliminarSeveridad()
 {
     try
     {
-        var sev = document.getElementById("severidad_a_eliminar").selectedIndex;
-        var setting_id = document.getElementsByTagName("option")[sev].value;
-        console.log(setting_id.toString());
+        var sev = document.getElementById("severidad_a_eliminar").options.selectedIndex;
+        var setting_id = document.getElementById("severidad_a_eliminar").options.item(sev).value;
         if (document.getElementById("severidad_a_eliminar").options.length <= 2)
             alert("No se puede eliminar la última severidad")
         else {
