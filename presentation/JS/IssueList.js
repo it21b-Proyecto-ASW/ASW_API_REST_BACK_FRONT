@@ -1,12 +1,66 @@
 /* =========================================================================
-   Issue List – lógica de frontend
+   Issue List ï¿½ lï¿½gica de frontend
    ======================================================================= */
 
 const API_BASE = "/api";
 
-/* ------------ Utilidades rápidas ---------------- */
+/* ------------ Utilidades rï¿½pidas ---------------- */
 const $ = sel => document.querySelector(sel);
 const create = (tag, cls) => Object.assign(document.createElement(tag), { className: cls ?? "" });
+
+/* -------- NAVBAR -------------------- */
+document.addEventListener('DOMContentLoaded', function() {
+    const userDropdown = document.getElementById('user-dropdown');
+
+    // Load users from API
+    async function loadUsers() {
+        try {
+            const response = await fetch(`${API_BASE}/users`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch users');
+            }
+
+            const users = await response.json();
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.nombre;
+                userDropdown.appendChild(option);
+            });
+
+            // Set current user if exists
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                userDropdown.value = currentUser;
+            }
+
+        } catch (error) {
+            console.error('Error loading users:', error);
+            userDropdown.innerHTML = '<option value="">Error loading users</option>';
+        }
+    }
+
+    // Handle user selection change
+    userDropdown.addEventListener('change', function() {
+        const selectedUser = this.value;
+        if (selectedUser) {
+            localStorage.setItem('currentUser', selectedUser);
+        }
+    });
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+    }
+
+    // Initialize
+    loadUsers();
+});
 
 /* ======================================================================
    1.  SELECTS DE FILTRO (parte superior de la lista)
@@ -183,11 +237,11 @@ async function createIssue() {
     const description = $("#description").value.trim();
     const creationDate = $("#creationDate").value; 
 
-    if (!subject) errors.push("El campo «Subject» es obligatorio.");
-    if (subject.length > 20) errors.push("«Subject» no puede superar 20 caracteres.");
+    if (!subject) errors.push("El campo ï¿½Subjectï¿½ es obligatorio.");
+    if (subject.length > 20) errors.push("ï¿½Subjectï¿½ no puede superar 20 caracteres.");
 
-    if (!description) errors.push("El campo «Description» es obligatorio.");
-    if (!creationDate) errors.push("Debes seleccionar la «Creation Date».");
+    if (!description) errors.push("El campo ï¿½Descriptionï¿½ es obligatorio.");
+    if (!creationDate) errors.push("Debes seleccionar la ï¿½Creation Dateï¿½.");
 
     if (errors.length) {
         alert(errors.join("\n"));
@@ -234,3 +288,5 @@ async function createIssue() {
 }
 
 $("#createBtn").addEventListener("click", createIssue);
+
+
