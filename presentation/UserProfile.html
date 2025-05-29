@@ -8,8 +8,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+
+    <!-- NAVBAR -->
+<nav class="navbar">
+    <div class="brand">Issue Tracker</div>
+
+    <ul class="nav-links">
+        <li><a href="IssueList.html">Issue List</a></li>
+        <li><a href="Settings.html">Settings</a></li>
+    </ul>
+
+    <ul class="nav-links right">
+        <li class="user-selector-nav">
+            <select id="user-dropdown">
+                <option value="">Loading users...</option>
+            </select>
+        </li>
+        <li><button id="logout-btn" class="link-btn">Logout</button></li>
+    </ul>
+</nav>
+
+    <!-- CONTENIDO -->
     <div class="container">
         <div class="profile-section">
+
             <div class="profile-header">
                 <div class="avatar-container">
                     <img id="user-avatar" src="https://via.placeholder.com/150" alt="User Avatar">
@@ -18,25 +40,25 @@
                         <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
                     </label>
                 </div>
-                <h1 id="username">Carles Farré</h1>
-                <p class="user-handle">@carlesf</p>
+                <h1 id="username">Loading...</h1>
+                <p class="user-handle" id="user-handle">@loading</p>
                 <div class="stats">
                     <div class="stat-item">
-                        <span class="stat-number" id="open-issues-count">3</span>
+                        <span class="stat-number" id="open-issues-count">-</span>
                         <span class="stat-label">Open</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number" id="watched-count">5</span>
+                        <span class="stat-number" id="watched-count">-</span>
                         <span class="stat-label">Watched</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number" id="comments-count">14</span>
+                        <span class="stat-number" id="comments-count">-</span>
                         <span class="stat-label">Comments</span>
                     </div>
                 </div>
             </div>
             <div class="profile-bio">
-                <p id="user-bio">Faculty member at the Department of Service and Information System Engineering, UPC - Barcelona Tech.</p>
+                <p id="user-bio">Loading bio...</p>
                 <button id="edit-bio-btn" class="edit-btn">EDIT BIO</button>
             </div>
         </div>
@@ -52,12 +74,13 @@
                 <div class="issues-header">
                     <div class="sort-options">
                         <select id="assigned-sort-by">
-                            <option value="type">Type</option>
-                            <option value="severity">Severity</option>
-                            <option value="priority">Priority</option>
-                            <option value="number">Issue #</option>
-                            <option value="status">Status</option>
-                            <option value="modified" selected>Modified</option>
+                            <option value="nombre">Name</option>
+                            <option value="tipo">Type</option>
+                            <option value="severidad">Severity</option>
+                            <option value="prioridad">Priority</option>
+                            <option value="id">Issue #</option>
+                            <option value="estado">Status</option>
+                            <option value="dateModified" selected>Modified</option>
                         </select>
                         <select id="assigned-sort-order">
                             <option value="asc">Ascending</option>
@@ -66,7 +89,7 @@
                     </div>
                 </div>
                 <div class="issues-list" id="assigned-issues-list">
-                    <!-- Issues will be loaded here -->
+                    <p>Loading assigned issues...</p>
                 </div>
             </div>
 
@@ -74,12 +97,13 @@
                 <div class="issues-header">
                     <div class="sort-options">
                         <select id="watched-sort-by">
-                            <option value="type">Type</option>
-                            <option value="severity">Severity</option>
-                            <option value="priority">Priority</option>
-                            <option value="number">Issue #</option>
-                            <option value="status">Status</option>
-                            <option value="modified" selected>Modified</option>
+                            <option value="nombre">Name</option>
+                            <option value="tipo">Type</option>
+                            <option value="severidad">Severity</option>
+                            <option value="prioridad">Priority</option>
+                            <option value="id">Issue #</option>
+                            <option value="estado">Status</option>
+                            <option value="dateModified" selected>Modified</option>
                         </select>
                         <select id="watched-sort-order">
                             <option value="asc">Ascending</option>
@@ -88,13 +112,13 @@
                     </div>
                 </div>
                 <div class="issues-list" id="watched-issues-list">
-                    <!-- Issues will be loaded here -->
+                    <p>Loading watched issues...</p>
                 </div>
             </div>
 
             <div class="tab-content" id="comments">
                 <div class="comments-list" id="comments-list">
-                    <!-- Comments will be loaded here -->
+                    <p>Loading comments...</p>
                 </div>
             </div>
         </div>
@@ -110,6 +134,6 @@
         </div>
     </div>
 
-    <script src="js/script.js"></script>
+    <script src="js/UserProfile.js"></script>
 </body>
 </html>
