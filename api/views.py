@@ -446,6 +446,30 @@ def comments_by_user(request, user_id: int):
     serializer = CommentSerializer(comments, many=True)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: IssueSerializer(many=True), 404: 'User not found'},
+    operation_summary="Obtener issues asignadas a un usuario"
+)
+@api_view(['GET'])
+def get_assigned_issues(request, user_id: int):
+    """Devuelve todas las issues asignadas al usuario."""
+    user = get_object_or_404(User, pk=user_id)
+    issues = Issue.objects.filter(assignedTo=user)
+    return Response(IssueSerializer(issues, many=True).data)
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: IssueSerializer(many=True), 404: 'User not found'},
+    operation_summary="Obtener issues observadas por un usuario"
+)
+@api_view(['GET'])
+def get_watched_issues(request, user_id: int):
+    """Devuelve todas las issues que el usuario observa (watched)."""
+    user = get_object_or_404(User, pk=user_id)
+    issues = Issue.objects.filter(watchers=user)
+    return Response(IssueSerializer(issues, many=True).data)
+
 # --- SETTINGS ---
 @swagger_auto_schema(
     method='get',
