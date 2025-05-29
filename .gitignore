@@ -2,3 +2,4 @@
 ASW_API_REST_BACK_FRONT/__pycache__/
 api/__pycache__/
 api/migrations/__pycache__/
+.env/
