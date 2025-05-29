@@ -1,86 +1,72 @@
 /* =========================================================================
    Issue List – lógica de frontend
-   -------------------------------------------------------------------------
-   - Rellena selects de filtros con datos de la API
-   - Carga y renderiza issues sin recargar la página
-   - Aplica búsqueda y filtros en el cliente o solicitando al backend
    ======================================================================= */
 
-/* ------------ Config ---------------- */
-// TODO: Sustituye por la URL base real de tu API
 const API_BASE = "/api";
 
-/* ------------ Utilidades simples ---- */
+/* ------------ Utilidades rápidas ---------------- */
 const $ = sel => document.querySelector(sel);
-const create = (tag, cls) => {
-    const el = document.createElement(tag);
-    if (cls) el.className = cls;
-    return el;
-};
+const create = (tag, cls) => Object.assign(document.createElement(tag), { className: cls ?? "" });
 
-/* ------------ Poblar selects -------- */
+/* ======================================================================
+   1.  SELECTS DE FILTRO (parte superior de la lista)
+   ====================================================================== */
 async function loadFilterOptions() {
     try {
-        // Ejemplo de endpoints; cámbialos por los tuyos
-        const [types, states, prios, sevs] = await Promise.all([
-            fetch(`${API_BASE}/types/`).then(r => r.json()),
-            fetch(`${API_BASE}/states/`).then(r => r.json()),
-            fetch(`${API_BASE}/priorities/`).then(r => r.json()),
-            fetch(`${API_BASE}/severities/`).then(r => r.json()),
+        const [tipos, estados, prioridades, severidades] = await Promise.all([
+            fetch(`${API_BASE}/settings/tipos`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/estados`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/prioridades`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/severidades`).then(r => r.json()),
         ]);
 
-        fillSelect("#filter-type", types, "name", "id");
-        fillSelect("#filter-state", states, "name", "id");
-        fillSelect("#filter-prio", prios, "name", "id");
-        fillSelect("#filter-sev", sevs, "name", "id");
-
+        fillSelect("#filter-type", tipos, "nombre", "id");
+        fillSelect("#filter-state", estados, "nombre", "id");
+        fillSelect("#filter-prio", prioridades, "nombre", "id");
+        fillSelect("#filter-sev", severidades, "nombre", "id");
     } catch (err) {
         console.error("Error cargando filtros:", err);
     }
 }
 
-function fillSelect(selectSel, data, labelKey, valueKey) {
-    const select = $(selectSel);
+function fillSelect(selector, data, labelKey, valueKey) {
+    const selEl = $(selector);
+    selEl.innerHTML = '<option value="" disabled selected hidden>Selecciona</option>';
     data.forEach(item => {
         const opt = create("option");
         opt.value = item[valueKey];
         opt.textContent = item[labelKey];
-        select.appendChild(opt);
+        selEl.appendChild(opt);
     });
 }
 
-/* ------------ Obtener issues -------- */
+/* ======================================================================
+   2.  CARGAR Y RENDERIZAR ISSUES
+   ====================================================================== */
 async function loadIssues() {
     try {
         const params = new URLSearchParams();
 
-        // Búsqueda
         const q = $("#search-input").value.trim();
         if (q) params.append("search", q);
 
-        // Filtros
-        appendIf(params, "type", $("#filter-type").value);
-        appendIf(params, "state", $("#filter-state").value);
-        appendIf(params, "priority", $("#filter-prio").value);
-        appendIf(params, "severity", $("#filter-sev").value);
+        appendIf(params, "tipo", $("#filter-type").value);
+        appendIf(params, "estado", $("#filter-state").value);
+        appendIf(params, "prioridad", $("#filter-prio").value);
+        appendIf(params, "severidad", $("#filter-sev").value);
 
-        const url = `${API_BASE}/issues/?${params.toString()}`;
-        const issues = await fetch(url).then(r => r.json());
+        const issues = await fetch(`${API_BASE}/issues/?${params.toString()}`).then(r => r.json());
         renderIssues(issues);
-
     } catch (err) {
         console.error("Error cargando issues:", err);
     }
 }
 
-function appendIf(params, key, value) {
-    if (value) params.append(key, value);
-}
+const appendIf = (params, key, value) => value && params.append(key, value);
 
-/* ------------ Renderizar lista ------- */
 function renderIssues(issues) {
     const list = $("#issue-list");
-    list.innerHTML = ""; // limpia
+    list.innerHTML = "";
 
     if (issues.length === 0) {
         list.textContent = "No se han encontrado issues.";
@@ -89,67 +75,162 @@ function renderIssues(issues) {
 
     issues.forEach(issue => {
         const card = create("div", "issue-card");
-
         const title = create("h3");
-        title.textContent = issue.title;
+        title.textContent = issue.nombre;          //  campo de tu API
         card.appendChild(title);
 
-        const viewBtn = create("a", "btn primary");
-        viewBtn.textContent = "View";
-        viewBtn.href = `Issue.html?id=${issue.id}`; // o Issue.html#1  …
-        card.appendChild(viewBtn);
+        const view = create("a", "btn primary");
+        view.href = `Issue.html?id=${issue.id}`;
+        view.textContent = "View";
+        card.appendChild(view);
 
         list.appendChild(card);
     });
 }
 
-/* ------------ Eventos ---------------- */
-$("#search-btn").addEventListener("click", loadIssues);
-$("#filter-btn").addEventListener("click", loadIssues);
-// Enter en el input de búsqueda
-$("#search-input").addEventListener("keypress", e => {
-    if (e.key === "Enter") loadIssues();
+/* ======================================================================
+   3.  MODAL "NUEVO ISSUE"
+   ====================================================================== */
+const modal = $("#issue-modal");
+const openBtn = $("#new-issue-btn");
+const closeBtn = $("#modal-close");
+const form = $("#issue-form");
+
+openBtn.addEventListener("click", async () => {
+    await loadModalOptions();
+    modal.classList.add("show");
 });
 
-/* ------------ Inicialización --------- */
+closeBtn.addEventListener("click", () => modal.classList.remove("show"));
+modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("show"); });
+
+/* ---- selects del modal ------------------------------------------------ */
+async function loadModalOptions() {
+    try {
+        const [estados, tipos, prioridades, severidades, usuarios] = await Promise.all([
+            fetch(`${API_BASE}/settings/estados`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/tipos`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/prioridades`).then(r => r.json()),
+            fetch(`${API_BASE}/settings/severidades`).then(r => r.json()),
+            fetch(`${API_BASE}/users/`).then(r => r.json()),
+        ]);
+
+        fillSelect("#estado", estados, "nombre", "id");
+        fillSelect("#tipo", tipos, "nombre", "id");
+        fillSelect("#prioridad", prioridades, "nombre", "id");
+        fillSelect("#severidad", severidades, "nombre", "id");
+        fillSelect("#assignedUser", usuarios, "nombre", "id");
+        fillSelect("#watcherUser", usuarios, "nombre", "id");
+    } catch (err) {
+        console.error("Error cargando selects del modal:", err);
+    }
+}
+
+/* ---- envio del formulario -------------------------------------------- */
+form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
+
+    const payload = {
+        nombre: $("#subject").value.trim(),
+        description: $("#description").value.trim(),
+        estado: $("#estado").value || null,
+        tipo: $("#tipo").value || null,
+        prioridad: $("#prioridad").value || null,
+        severidad: $("#severidad").value || null,
+        deadline: $("#deadline").value || null,
+        assignedTo: multi("#assignedUser"),
+        watchers: multi("#watcherUser"),
+        // author lo pones en el backend con request.user o similar
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/issues/create/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Error al crear issue");
+        modal.classList.remove("show");
+        form.reset();
+        await loadIssues();
+    } catch (err) {
+        alert(err.message);
+    }
+});
+
+/* ======================================================================
+   4.  EVENTOS GENERALES / INICIALIZACION
+   ====================================================================== */
+$("#search-btn").addEventListener("click", loadIssues);
+$("#filter-btn").addEventListener("click", loadIssues);
+$("#search-input").addEventListener("keypress", e => { if (e.key === "Enter") loadIssues(); });
+
 window.addEventListener("DOMContentLoaded", async () => {
     await loadFilterOptions();
     await loadIssues();
 });
 
 
-const modal = $("#issue-modal");
-const openBtn = $("#new-issue-btn");
-const closeBtn = $("#modal-close");
-const form = $("#issue-form");
 
-openBtn.addEventListener("click", () => modal.classList.add("show"));
-closeBtn.addEventListener("click", () => modal.classList.remove("show"));
-modal.addEventListener("click", e => {
-    if (e.target === modal) modal.classList.remove("show");
-});
+async function createIssue() {
 
-/* ---- Enviar formulario ---- */
-form.addEventListener("submit", async e => {
-    e.preventDefault();
+
+    const errors = [];
+
+    const subject = $("#subject").value.trim();
+    const description = $("#description").value.trim();
+    const creationDate = $("#creationDate").value; 
+
+    if (!subject) errors.push("El campo «Subject» es obligatorio.");
+    if (subject.length > 20) errors.push("«Subject» no puede superar 20 caracteres.");
+
+    if (!description) errors.push("El campo «Description» es obligatorio.");
+    if (!creationDate) errors.push("Debes seleccionar la «Creation Date».");
+
+    if (errors.length) {
+        alert(errors.join("\n"));
+        return; 
+    }
+
+
+    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
+
     const payload = {
-        title: $("#subject").value.trim(),
-        description: $("#description").value.trim(),
-        state: $("#estado").value || null,
-        type: $("#tipo").value || null,
-        priority: $("#prioridad").value || null,
-        severity: $("#severidad").value || null,
-        deadline: $("#deadline").value || null
+        nombre: subject,
+        description: description,
+        creationDate: creationDate,                                   // NUEVO
+        estado: $("#estado").value ? Number($("#estado").value) : null,
+        tipo: $("#tipo").value ? Number($("#tipo").value) : null,
+        prioridad: $("#prioridad").value ? Number($("#prioridad").value) : null,
+        severidad: $("#severidad").value ? Number($("#severidad").value) : null,
+        assignedTo: multi("#assignedUser"),
+        watchers: multi("#watcherUser"),
+        deadline: $("#deadline").value || null,
     };
+
+
     try {
         const res = await fetch(`${API_BASE}/issues/create/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error("Error al crear issue");
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || JSON.stringify(err));
+        }
+
         modal.classList.remove("show");
-        form.reset();
-        await loadIssues();             // refresca la lista
-    } catch (err) { alert(err.message); }
-});
+        $("#issue-form").reset();
+        await loadIssues();
+
+    } catch (err) {
+        alert(`No se pudo crear el issue:\n${err.message}`);
+        console.error(err);
+    }
+}
+
+$("#createBtn").addEventListener("click", createIssue);

@@ -196,7 +196,7 @@ h1 {
 .modal-content {
     background: #fff;
     width: 100%;
-    max-width: 30rem;
+    max-width: 50rem;
     border-radius: var(--radius);
     padding: 1.5rem;
     position: relative;

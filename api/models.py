@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 import secrets
 from django.db import models
 from django.utils import timezone
+from django.db.models import Q, UniqueConstraint
 
 
 
@@ -29,7 +30,19 @@ class User(models.Model):
     numOpenIssues    = models.IntegerField(default=0)
     numWatchedIssues = models.IntegerField(default=0)
     numComments      = models.IntegerField(default=0)
-    
+    selected         = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            
+            UniqueConstraint(
+                fields=["selected"],       
+                condition=Q(selected=True),
+                name="unique_selected_user",
+            )
+        ]
+
+
     def save(self, *args, **kwargs):
         
         if not self.apikey:
