@@ -111,16 +111,21 @@
 
                     <label>
                         Assigned To
-                        <select id="assignedUser"></select>
+                        <select id="assignedUser" multiple>
+                            <option value="" disabled hidden>Selecciona</option>
+                        </select>
+
                     </label>
 
                     <label>
                         Watchers
-                        <select id="watcherUser"></select>
+                        <select id="watcherUser" multiple>
+                            <option value="" disabled hidden>Selecciona</option>
+                        </select>
                     </label>
                 </div>
 
-                    <button type="submit" id="createBtn" class="btn primary wide button-save-issue">Crear</button>
+                <button id="createBtn" type="button" class="btn primary wide">Crear</button>
             </form>
         </div>
     </div>

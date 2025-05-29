@@ -126,39 +126,8 @@ async function loadModalOptions() {
     }
 }
 
-/* ---- envio del formulario -------------------------------------------- */
-form.addEventListener("submit", async e => {
-    e.preventDefault();
 
-    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
 
-    const payload = {
-        nombre: $("#subject").value.trim(),
-        description: $("#description").value.trim(),
-        estado: $("#estado").value || null,
-        tipo: $("#tipo").value || null,
-        prioridad: $("#prioridad").value || null,
-        severidad: $("#severidad").value || null,
-        deadline: $("#deadline").value || null,
-        assignedTo: multi("#assignedUser"),
-        watchers: multi("#watcherUser"),
-        // author lo pones en el backend con request.user o similar
-    };
-
-    try {
-        const res = await fetch(`${API_BASE}/issues/create/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Error al crear issue");
-        modal.classList.remove("show");
-        form.reset();
-        await loadIssues();
-    } catch (err) {
-        alert(err.message);
-    }
-});
 
 /* ======================================================================
    4.  EVENTOS GENERALES / INICIALIZACION
@@ -195,7 +164,10 @@ async function createIssue() {
     }
 
 
-    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
+    const multi = sel => Array.from($(sel).selectedOptions)
+        .map(o => o.value)
+        .filter(v => v !== "")
+        .map(Number);
 
     const payload = {
         nombre: subject,

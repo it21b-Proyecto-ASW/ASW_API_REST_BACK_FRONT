@@ -44,8 +44,15 @@ from .serializers import (
 #   Serializadores de escritura (ids en lugar de objetos anidados)
 # --------------------------------------------------------------------
 class IssueWriteSerializer(serializers.ModelSerializer):
+    assignedTo = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        required=False
+    )
     watchers = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True, required=False
+        queryset=User.objects.all(),
+        many=True,
+        required=False
     )
     tipo = serializers.PrimaryKeyRelatedField(
         queryset=TipoIssue.objects.all(), required=False, allow_null=True, default=None
@@ -62,6 +69,7 @@ class IssueWriteSerializer(serializers.ModelSerializer):
     severidad = serializers.PrimaryKeyRelatedField(
         queryset=SeveridadIssue.objects.all(), required=False, allow_null=True, default=None
     )
+    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True, default=None, write_only=True,)
 
     class Meta:
         model = Issue
@@ -112,15 +120,22 @@ SETTING_MODEL_MAP = {
 )
 @api_view(['POST'])
 def create_issue(request):
-    """Crear un nuevo issue."""
-    serializer = IssueWriteSerializer(data=request.data)
+    """Crear un nuevo issue. El autor será el User marcado como selected=True."""
+    serializer = IssueWriteSerializer(data=request.data, partial=True) 
     serializer.is_valid(raise_exception=True)
 
-    with transaction.atomic():
-        issue = serializer.save(dateModified=timezone.now())
-        _update_m2m(issue, serializer.validated_data)
 
-        issue.refresh_from_db()
+    try:
+        selected_user = User.objects.get(selected=True)
+    except User.DoesNotExist:
+        return Response(
+            {"author": "No hay ningun usuario con selected=True"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    with transaction.atomic():
+        issue = serializer.save(author=selected_user, dateModified=timezone.now())
+        _update_m2m(issue, serializer.validated_data)
 
     return Response(IssueSerializer(issue).data, status=status.HTTP_201_CREATED)
 
