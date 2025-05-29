@@ -8,15 +8,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+
+    <!-- NAVBAR -->
+<nav class="navbar">
+    <div class="brand">Issue Tracker</div>
+
+    <ul class="nav-links">
+        <li><a href="IssueList.html">Issue List</a></li>
+        <li><a href="Settings.html">Settings</a></li>
+    </ul>
+
+    <ul class="nav-links right">
+        <li class="user-selector-nav">
+            <select id="user-dropdown">
+                <option value="">Loading users...</option>
+            </select>
+        </li>
+        <li><button id="logout-btn" class="link-btn">Logout</button></li>
+    </ul>
+</nav>
+
+    <!-- CONTENIDO -->
     <div class="container">
         <div class="profile-section">
-            <!-- User Selector Dropdown -->
-            <div class="user-selector">
-                <label for="user-dropdown">Select User:</label>
-                <select id="user-dropdown">
-                    <option value="">Loading users...</option>
-                </select>
-            </div>
 
             <div class="profile-header">
                 <div class="avatar-container">
