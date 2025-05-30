@@ -1,5 +1,3 @@
-
-
 const API_BASE = "/api";
 (function () {
     var real = window.fetch.bind(window);
@@ -54,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('currentUser');
         if (saved) {
             userDropdown.value = saved;
-
             localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
@@ -65,11 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
-
     // Initialize
     loadUsers();
 });
-
 
 async function loadFilterOptions() {
     try {
@@ -93,7 +88,6 @@ function fillSelect(selector, data, labelKey, valueKey, selected = null) {
     const selEl = $(selector);
     selEl.innerHTML = '';
 
-
     const ph = document.createElement('option');
     ph.textContent = 'Selecciona';
     ph.value = '';
@@ -111,7 +105,6 @@ function fillSelect(selector, data, labelKey, valueKey, selected = null) {
         selEl.appendChild(opt);
     });
 }
-
 
 async function loadIssues() {
     try {
@@ -133,8 +126,6 @@ async function loadIssues() {
 }
 
 const appendIf = (params, key, value) => value && params.append(key, value);
-
-
 
 const modal = $("#issue-modal");
 const openBtn = $("#new-issue-btn");
@@ -170,7 +161,6 @@ async function loadModalOptions() {
     }
 }
 
-
 $("#search-btn").addEventListener("click", loadIssues);
 $("#filter-btn").addEventListener("click", loadIssues);
 $("#search-input").addEventListener("keypress", e => { if (e.key === "Enter") loadIssues(); });
@@ -180,74 +170,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadIssues();
 });
 
-
-
-async function createIssue() {
-
-
-    const errors = [];
-
-    const subject = $("#subject").value.trim();
-    const description = $("#description").value.trim();
-    const creationDate = $("#creationDate").value;
-
-    if (!subject) errors.push("El campo Subject es obligatorio.");
-    if (subject.length > 20) errors.push("Subject no puede superar 20 caracteres.");
-
-    if (!description) errors.push("El campo Description es obligatorio.");
-    if (!creationDate) errors.push("Debes seleccionar la Creation Date.");
-
-    if (errors.length) {
-        alert(errors.join("\n"));
-        return;
-    }
-
-
-    const multi = sel => Array.from($(sel).selectedOptions)
-        .map(o => o.value)
-        .filter(v => v !== "")
-        .map(Number);
-
-    const payload = {
-        nombre: subject,
-        description: description,
-        creationDate: creationDate,
-        estado: $("#estado").value ? Number($("#estado").value) : null,
-        tipo: $("#tipo").value ? Number($("#tipo").value) : null,
-        prioridad: $("#prioridad").value ? Number($("#prioridad").value) : null,
-        severidad: $("#severidad").value ? Number($("#severidad").value) : null,
-        assignedTo: multi("#assignedUser"),
-        watchers: multi("#watcherUser"),
-        deadline: $("#deadline").value || null,
-    };
-
-
-    try {
-        const res = await fetch(`${API_BASE}/issues/create/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || JSON.stringify(err));
-        }
-
-        modal.classList.remove("show");
-        $("#issue-form").reset();
-        await loadIssues();
-
-    } catch (err) {
-        alert(`No se pudo crear el issue:\n${err.message}`);
-        console.error(err);
-    }
-}
-
-$("#createBtn").addEventListener("click", createIssue);
-
+// Función auxiliar para obtener valores múltiples de select
 const multi = sel => Array.from($(sel).selectedOptions)
-    .map(o => +o.value).filter(Boolean);
+    .map(o => o.value)
+    .filter(v => v !== "" && v !== null && v !== undefined)
+    .map(Number)
+    .filter(n => !isNaN(n));
 
 function setMulti(sel, values = []) {
     Array.from($(sel).options).forEach(o => {
@@ -270,6 +198,7 @@ function fill(sel, data, selected) {
 
     const placeholder = create("option");
     placeholder.textContent = "Selecciona";
+    placeholder.value = "";
     placeholder.disabled = true;
     placeholder.hidden = true;
     placeholder.selected = selected === null || selected === undefined;
@@ -283,7 +212,6 @@ function fill(sel, data, selected) {
         sel.appendChild(opt);
     });
 }
-
 
 async function openView(id) {
     const data = await fetch(`${API_BASE}/issues/${id}/`).then(r => r.json());
@@ -306,7 +234,6 @@ async function openView(id) {
 
     $("#view-modal").classList.add("show");
 }
-
 
 let editId = null;
 
@@ -336,81 +263,219 @@ async function openEdit(id) {
 $("#saveEditBtn").addEventListener("click", async () => {
     if (!editId) return;
 
+    const errors = [];
+    const subject = $("#e-subject").value.trim();
+    const description = $("#e-desc").value.trim();
+    const creationDate = $("#e-created").value;
+
+    // Validaciones básicas
+    if (!subject) errors.push("El campo Subject es obligatorio.");
+    if (subject.length > 20) errors.push("Subject no puede superar 20 caracteres.");
+    if (!description) errors.push("El campo Description es obligatorio.");
+    if (!creationDate) errors.push("Debes seleccionar la Creation Date.");
+
+    if (errors.length) {
+        alert(errors.join("\n"));
+        return;
+    }
+
+    // Obtener el author del issue actual
+    let currentAuthor;
+    try {
+        const currentIssue = await fetch(`${API_BASE}/issues/${editId}/`).then(r => r.json());
+        currentAuthor = currentIssue.author;
+    } catch (err) {
+        alert("Error al obtener información del issue actual");
+        return;
+    }
+
+    // Función para convertir valores de select
+    const convertSelectValue = (value) => {
+        if (!value || value === "" || value === "0") return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+    };
+
     const payload = {
-        nombre: $("#e-subject").value.trim(),
-        description: $("#e-desc").value.trim(),
-        creationDate: $("#e-created").value || null,
+        nombre: subject,
+        author: currentAuthor, // CRÍTICO: Incluir el author
+        description: description,
+        creationDate: creationDate,
         deadline: $("#e-deadline").value || null,
-        estado: $("#e-estado").value || null,
-        tipo: $("#e-tipo").value || null,
-        prioridad: $("#e-prio").value || null,
-        severidad: $("#e-sev").value || null,
+        estado: convertSelectValue($("#e-estado").value),
+        tipo: convertSelectValue($("#e-tipo").value),
+        prioridad: convertSelectValue($("#e-prio").value),
+        severidad: convertSelectValue($("#e-sev").value),
         assignedTo: multi("#e-assigned"),
         watchers: multi("#e-watchers"),
     };
 
-    const res = await fetch(`${API_BASE}/issues/${editId}/edit/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
+    try {
+        const res = await fetch(`${API_BASE}/issues/${editId}/edit/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-    if (!res.ok) { alert("Error al guardar cambios"); return; }
-    $("#edit-modal").classList.remove("show");
-    await loadIssues();
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Error response:", errorText);
+            alert(`Error al guardar cambios: ${errorText}`);
+            return;
+        }
+
+        $("#edit-modal").classList.remove("show");
+        await loadIssues();
+    } catch (err) {
+        console.error("Error en saveEdit:", err);
+        alert(`Error al guardar: ${err.message}`);
+    }
 });
 
+async function createIssue() {
+    const errors = [];
+    const subject = $("#subject").value.trim();
+    const description = $("#description").value.trim();
+    const creationDate = $("#creationDate").value;
+
+    if (!subject) errors.push("El campo Subject es obligatorio.");
+    if (subject.length > 20) errors.push("Subject no puede superar 20 caracteres.");
+    if (!description) errors.push("El campo Description es obligatorio.");
+    if (!creationDate) errors.push("Debes seleccionar la Creation Date.");
+
+    if (errors.length) {
+        alert(errors.join("\n"));
+        return;
+    }
+
+    // Obtener el usuario actual
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        alert("Debes seleccionar un usuario antes de crear un issue.");
+        return;
+    }
+
+    // Función para convertir valores de select
+    const convertSelectValue = (value) => {
+        if (!value || value === "" || value === "0") return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+    };
+
+    const payload = {
+        nombre: subject,
+        author: Number(currentUser), // CRÍTICO: Incluir el author
+        description: description,
+        creationDate: creationDate,
+        estado: convertSelectValue($("#estado").value),
+        tipo: convertSelectValue($("#tipo").value),
+        prioridad: convertSelectValue($("#prioridad").value),
+        severidad: convertSelectValue($("#severidad").value),
+        assignedTo: multi("#assignedUser"),
+        watchers: multi("#watcherUser"),
+        deadline: $("#deadline").value || null,
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/issues/create/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Error response:", errorText);
+            throw new Error(errorText);
+        }
+
+        modal.classList.remove("show");
+        $("#issue-form").reset();
+        await loadIssues();
+
+    } catch (err) {
+        alert(`No se pudo crear el issue:\n${err.message}`);
+        console.error(err);
+    }
+}
+
+$("#createBtn").addEventListener("click", createIssue);
 
 function renderIssues(issues) {
-    const list = $("#issue-list"); list.innerHTML = "";
-    if (!issues.length) { list.textContent = "No se han encontrado issues."; return; }
+    const list = $("#issue-list"); 
+    list.innerHTML = "";
+    
+    if (!issues.length) { 
+        list.textContent = "No se han encontrado issues."; 
+        return; 
+    }
 
     issues.forEach(it => {
         const card = create("div", "issue-card");
         card.appendChild(Object.assign(create("h3"), { textContent: it.nombre }));
 
-        const bEdit = create("button", "btn warn"); bEdit.textContent = "Edit";
-        bEdit.onclick = () => openEdit(it.id); card.appendChild(bEdit);
+        const bEdit = create("button", "btn warn"); 
+        bEdit.textContent = "Edit";
+        bEdit.onclick = () => openEdit(it.id); 
+        card.appendChild(bEdit);
 
-        const bView = create("button", "btn primary"); bView.textContent = "View";
-        bView.onclick = () => openView(it.id); card.appendChild(bView);
+        const bView = create("button", "btn primary"); 
+        bView.textContent = "View";
+        bView.onclick = () => openView(it.id); 
+        card.appendChild(bView);
 
         list.appendChild(card);
     });
 }
 
-
+// Event listeners para cerrar modales
 document.querySelectorAll("[data-close]").forEach(b => {
     b.addEventListener("click", () => $("#" + b.dataset.close + "-modal").classList.remove("show"));
 });
+
 window.addEventListener("click", e => {
     if (e.target.classList.contains("modal")) e.target.classList.remove("show");
 });
 
+// Sistema de drafts mejorado
 const drafts = [];
 
 function readForm() {
     const required = $("#subject").value.trim();
     if (!required) return null;
+    
     const errors = [];
-
     if (required.length > 20) errors.push("«Subject» supera 20 caracteres.");
     if (!$("#description").value.trim()) errors.push("Description es obligatoria.");
     if (!$("#creationDate").value) errors.push("Creation Date es obligatoria.");
 
-    if (errors.length) { alert(errors.join("\n")); return null; }
+    if (errors.length) { 
+        alert(errors.join("\n")); 
+        return null; 
+    }
 
-    const multi = sel => Array.from($(sel).selectedOptions).map(o => +o.value).filter(Boolean);
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        alert("Debes seleccionar un usuario.");
+        return null;
+    }
+
+    const convertSelectValue = (value) => {
+        if (!value || value === "" || value === "0") return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+    };
 
     return {
         nombre: required,
+        author: Number(currentUser), // CRÍTICO: Incluir el author
         description: $("#description").value.trim(),
         creationDate: $("#creationDate").value,
         deadline: $("#deadline").value || null,
-        estado: $("#estado").value || null,
-        tipo: $("#tipo").value || null,
-        prioridad: $("#prioridad").value || null,
-        severidad: $("#severidad").value || null,
+        estado: convertSelectValue($("#estado").value),
+        tipo: convertSelectValue($("#tipo").value),
+        prioridad: convertSelectValue($("#prioridad").value),
+        severidad: convertSelectValue($("#severidad").value),
         assignedTo: multi("#assignedUser"),
         watchers: multi("#watcherUser")
     };
@@ -423,47 +488,59 @@ $("#addIssueBtn").addEventListener("click", () => {
     drafts.push(payload);
     renderDrafts();
     form.reset();
-
-
     form.querySelectorAll("select").forEach(s => s.selectedIndex = 0);
 });
 
-async function createIssue() {
+async function createMultipleIssues() {
     const last = readForm();
     if (last) drafts.push(last);
 
-    if (!drafts.length) { alert("No hay ningún issue para crear."); return; }
-
-    let res = await fetch(`${API_BASE}/issues/bulk_insert/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(drafts)
-    });
-
-    // 
-    if (res.status === 404) {
-        const results = await Promise.allSettled(
-            drafts.map(d => fetch(`${API_BASE}/issues/create/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(d)
-            }))
-        );
-        if (results.some(r => r.status === "rejected" || !r.value.ok)) {
-            alert("Alguno de los issues no se creó correctamente"); return;
-        }
-    } else if (!res.ok) {
-        alert("Error al crear issues"); return;
+    if (!drafts.length) { 
+        alert("No hay ningún issue para crear."); 
+        return; 
     }
 
-    drafts.length = 0;
-    renderDrafts();
-    modal.classList.remove("show");
-    form.reset();
-    await loadIssues();
+    try {
+        let res = await fetch(`${API_BASE}/issues/bulk-insert/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(drafts)
+        });
+
+        // Fallback si bulk-insert no existe
+        if (res.status === 404) {
+            const results = await Promise.allSettled(
+                drafts.map(d => fetch(`${API_BASE}/issues/create/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(d)
+                }))
+            );
+            
+            const failed = results.filter(r => r.status === "rejected" || !r.value.ok);
+            if (failed.length > 0) {
+                console.error("Failed requests:", failed);
+                alert("Alguno de los issues no se creó correctamente");
+                return;
+            }
+        } else if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Bulk insert error:", errorText);
+            alert(`Error al crear issues: ${errorText}`);
+            return;
+        }
+
+        drafts.length = 0;
+        renderDrafts();
+        modal.classList.remove("show");
+        form.reset();
+        await loadIssues();
+        
+    } catch (err) {
+        console.error("Error creating multiple issues:", err);
+        alert(`Error al crear issues: ${err.message}`);
+    }
 }
-
-
 
 function renderDrafts() {
     const list = $("#draftsList");
@@ -481,4 +558,3 @@ function removeDraft(idx) {
     drafts.splice(idx, 1);
     renderDrafts();
 }
-
