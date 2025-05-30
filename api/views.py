@@ -12,6 +12,7 @@ from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import secrets
+from rest_framework.permissions import IsAuthenticated, AllowAny  
 
 from rest_framework import serializers
 from .models import (
@@ -396,6 +397,7 @@ def user_profile(request, user_id: int):
     operation_summary="Listar todos los usuarios",
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def list_users(request):
     """Devuelve la lista completa de usuarios."""
     users = User.objects.all()
@@ -427,6 +429,7 @@ def edit_user_profile(request, user_id: int):
     operation_summary="Crear un usuario (apikey generada)",
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_user(request):
     """Crear un usuario y generar automaticamente su API-key."""
     serializer = UserWriteSerializer(data=request.data)
@@ -441,6 +444,7 @@ def create_user(request):
     operation_summary="Generar/aplicar una API-key aleatoria a un usuario",
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def assign_apikey_to_user(request, user_id: int):
     """Genera una nueva API-key random y la asigna al user indicado."""
     user = get_object_or_404(User, pk=user_id)
@@ -709,6 +713,7 @@ def delete_severidad(request, setting_id):
     operation_summary="Editar un setting existente."
 )
 @api_view(['PUT'])
+
 def edit_setting(request, setting_id):
     """Editar un setting existente (nombre)."""
     setting_type = request.query_params.get("setting_type")

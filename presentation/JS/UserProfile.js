@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Configuration
-    const API_BASE_URL = "/api";
+    const API_BASE_URL = '/api';
 
     // DOM elements
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -24,6 +24,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let commentsData = [];
     let allUsers = [];
 
+    (function () {
+        const realFetch = window.fetch.bind(window);
+
+        window.fetch = function (url, opts = {}) {
+            if (typeof url === 'string' && url.startsWith(API_BASE_URL)) {
+                const key = localStorage.getItem('currentUserKey');
+                if (key) {
+                    opts.headers = { ...(opts.headers || {}), 'X-API-Key': key };
+                }
+            }
+            return realFetch(url, opts);
+        };
+    })();
+
     // Initialize the page
     init();
 
@@ -36,14 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const storedUserId = sessionStorage.getItem('user_id');
 
             if (storedUserId) {
-                // Use stored user
                 userDropdown.value = storedUserId;
+                await getAndStoreApiKey(storedUserId);          // <-- NUEVA
             } else if (allUsers.length > 0) {
-                // Use first user as default
                 const firstUserId = allUsers[0].id;
                 userDropdown.value = firstUserId;
-
-                // Get and store API key for first user
                 await getAndStoreApiKey(firstUserId);
             }
 
@@ -88,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store user ID and API key in session storage
             sessionStorage.setItem('user_id', userId);
             sessionStorage.setItem('apikey', response.apikey);
+            localStorage.setItem('currentUserKey', response.apikey); 
 
             console.log(`User ID ${userId} and API key stored in session storage`);
             return response.apikey;

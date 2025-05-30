@@ -4,63 +4,81 @@ const API_BASE = "/api";
 const api_getTipos = `${API_BASE}/settings/tipos`
 const api_getEstados = `${API_BASE}/settings/estados`
 const api_getPrioridades = `${API_BASE}/settings/prioridades`
-const api_getSeveridades = `${API_BASE}/settings/severidades`
+const api_getSeveridades = `${API_BASE}/settings/severidades`;
 
+
+(function () {
+    var real = window.fetch.bind(window);
+
+    window.fetch = function (url, opts) {
+        opts = opts || {};
+        if (typeof url === "string" && url.indexOf(API_BASE) === 0) {
+            var key = localStorage.getItem("currentUserKey");
+            if (key) {
+                opts.headers = opts.headers || {};
+                opts.headers["X-API-Key"] = key;
+            }
+        }
+        return real(url, opts);
+    };
+})();
+
+
+async function fetchJson(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Error ${res.status} en ${url}: ${text}`);
+    }
+    return res.status === 204 ? null : await res.json();
+}
 
 /* -------- NAVBAR -------------------- */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     const userDropdown = document.getElementById('user-dropdown');
+    const usersCache = {}; 
 
-    // Load users from API
     async function loadUsers() {
-        try {
-            const response = await fetch(`${API_BASE}/users`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch users');
+        const users = await fetchJson(`${API_BASE}/users/`);
+
+        users.forEach(u => {
+            usersCache[u.id] = u.apikey; 
+
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.nombre;
+            userDropdown.appendChild(opt);
+
+            if (u.selected) { 
+                localStorage.setItem('currentUser', u.id);
+                localStorage.setItem('currentUserKey', u.apikey); 
             }
+        });
 
-            const users = await response.json();
-
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = user.nombre;
-                userDropdown.appendChild(option);
-            });
-
-            // Set current user if exists
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                userDropdown.value = currentUser;
-            }
-
-        } catch (error) {
-            console.error('Error loading users:', error);
-            userDropdown.innerHTML = '<option value="">Error loading users</option>';
+        const saved = localStorage.getItem('currentUser');
+        if (saved) {
+            userDropdown.value = saved;
+            
+            localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
 
-    // Handle user selection change
-    userDropdown.addEventListener('change', function() {
-        const selectedUser = this.value;
-        if (selectedUser) {
-            localStorage.setItem('currentUser', selectedUser);
-        }
+    userDropdown.addEventListener('change', e => {
+        const id = e.target.value;
+        localStorage.setItem('currentUser', id);
+        localStorage.setItem('currentUserKey', usersCache[id] || ''); 
     });
 
-    // Logout functionality
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
+        logoutBtn.addEventListener('click', function () {
             localStorage.removeItem('currentUser');
             window.location.href = 'login.html';
         });
     }
 
-    // Initialize
     loadUsers();
 });
-
 /* ------------ Utilidades simples ---- */
 const $ = sel => document.querySelector(sel);
 const create = (tag, cls) => {
@@ -162,12 +180,12 @@ async function crearTipo()
 {
     try{
         var nomT = document.getElementById("nom_tipo").value;
-        const res = await fetch("http://127.0.0.1:8000/api/settings/createtipo/",
+        const res = await fetch(`${API_BASE}/settings/createtipo/`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomT})
-        }).then(res => res.json);
+        }).then(res => res.json());
         document.getElementById("nom_tipo").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -188,7 +206,7 @@ async function eliminarTipo()
             {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+            }).then(res => res.json());
             alert("se ha eliminado correctamente");
             document.getElementById("tipo_a_eliminar").remove(tipo);
             document.getElementById("tipo_sustituto").remove(tipo);
@@ -205,12 +223,12 @@ async function crearPrioridad()
         var nomP = document.getElementById("nom_prio").value;
         var select1 = document.getElementById("prioridad_a_eliminar");
         var select2 = document.getElementById("prioridad_sustituta");
-        const res = await fetch("http://127.0.0.1:8000/api/settings/createprioridad/",
+        const res = await fetch(`${API_BASE}/settings/createprioridad/`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomP})
-        }).then(res => res.json);
+        }).then(res => res.json());
 
         document.getElementById("nom_prio").value = "";
         alert("se ha creado correctamente");
@@ -233,7 +251,7 @@ async function eliminarPrioridad()
             {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+            }).then(res => res.json());
             alert("Se ha eliminado correctamente");
             document.getElementById("prioridad_a_eliminar").remove(prio);
             document.getElementById("prioridad_sustituta").remove(prio);
@@ -250,12 +268,12 @@ async function crearEstado()
         var nomE = document.getElementById("nom_estado").value;
         var select1 = document.getElementById("estado_a_eliminar");
         var select2 = document.getElementById("estado_sustituto");
-        const res = await fetch("http://127.0.0.1:8000/api/settings/createestado/",
+        const res = await fetch(`${API_BASE}/settings/createestado/`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomE})
-        }).then(res => res.json);
+        }).then(res => res.json());
         document.getElementById("nom_estado").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -277,7 +295,7 @@ async function eliminarEstado()
             {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+            }).then(res => res.json());
             alert("se ha eliminado correctamente");
             document.getElementById("estado_a_eliminar").remove(estado);
             document.getElementById("estado_sustituto").remove(estado);
@@ -294,12 +312,12 @@ async function crearSeveridad()
         var nomS = document.getElementById("nom_sev").value;
         var select1 = document.getElementById("severidad_a_eliminar");
         var select2 = document.getElementById("severidad_sustituta");
-        const res = await fetch("http://127.0.0.1:8000/api/settings/createseveridad/",
+        const res = await fetch(`${API_BASE }/settings/createseveridad/`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomS})
-        }).then(res => res.json);
+        }).then(res => res.json());
         document.getElementById("nom_sev").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -321,7 +339,7 @@ async function eliminarSeveridad()
             {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+            }).then(res => res.json());
 
             alert("se ha eliminado correctamente");
             document.getElementById("severidad_a_eliminar").remove(sev);
