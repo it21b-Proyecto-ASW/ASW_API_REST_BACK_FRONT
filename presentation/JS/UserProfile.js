@@ -1,6 +1,6 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Configuration
-    const API_BASE_URL = "/api";
+    const API_BASE_URL = '/api';
 
     // DOM elements
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -24,30 +24,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let commentsData = [];
     let allUsers = [];
 
-    // Initialize the page
+    (function () {
+        const realFetch = window.fetch.bind(window);
+
+        window.fetch = function (url, opts = {}) {
+            if (typeof url === 'string' && url.startsWith(API_BASE_URL)) {
+                const key = localStorage.getItem('currentUserKey');
+                if (key) {
+                    opts.headers = { ...(opts.headers || {}), 'X-API-Key': key };
+                }
+            }
+            return realFetch(url, opts);
+        };
+    })();
+
+
     init();
 
     async function init() {
         try {
-            // Load all users first
+
             await loadAllUsers();
 
-            // Check if we have a user in session storage
+
             const storedUserId = sessionStorage.getItem('user_id');
 
             if (storedUserId) {
-                // Use stored user
                 userDropdown.value = storedUserId;
+                await getAndStoreApiKey(storedUserId);
             } else if (allUsers.length > 0) {
-                // Use first user as default
                 const firstUserId = allUsers[0].id;
                 userDropdown.value = firstUserId;
-
-                // Get and store API key for first user
                 await getAndStoreApiKey(firstUserId);
             }
 
-            // Load profile for selected user
+
             await loadUserProfile();
             await loadAssignedIssues();
         } catch (error) {
@@ -80,14 +91,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function getAndStoreApiKey(userId) {
         try {
-            // Call the assign-apikey endpoint to get/generate an API key
+
             const response = await apiRequest(`/users/${userId}/assign-apikey/`, {
                 method: 'POST'
             });
 
-            // Store user ID and API key in session storage
+
             sessionStorage.setItem('user_id', userId);
             sessionStorage.setItem('apikey', response.apikey);
+            localStorage.setItem('currentUserKey', response.apikey);
 
             console.log(`User ID ${userId} and API key stored in session storage`);
             return response.apikey;
@@ -98,20 +110,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Handle user selection change
-    userDropdown.addEventListener('change', async function() {
+
+    userDropdown.addEventListener('change', async function () {
         const selectedUserId = this.value;
         if (!selectedUserId) return;
 
         try {
-            // Get and store API key for selected user
+
             await getAndStoreApiKey(selectedUserId);
 
-            // Reload user profile and data
+
             await loadUserProfile();
             await loadAssignedIssues();
 
-            // Reset active tab to assigned issues
+
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector('[data-tab="assigned-issues"]').classList.add('active');
@@ -122,14 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // API Functions
+
     async function apiRequest(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
-                // Add basic authentication if needed for your API
-                // 'Authorization': 'Basic ' + btoa('username:password')
+
             }
         };
 
@@ -139,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
 
-        // Handle 204 No Content responses
+
         if (response.status === 204) {
             return null;
         }
@@ -254,6 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
         username.textContent = user.nombre;
         userHandle.textContent = `@${user.nombre.toLowerCase().replace(/\s+/g, '')}`;
         userBio.textContent = user.biography || 'No bio available';
+        const apikey = sessionStorage.getItem('apikey');
+        document.getElementById('user-apikey').textContent = `ApiKey: ${user.apikey || 'N/A'}`;
 
         if (user.photo) {
             userAvatar.src = user.photo;
@@ -268,18 +281,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showError(message) {
-        // You can implement a more sophisticated error display
+
         alert(message);
     }
 
-    // Tab switching functionality
+
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Remove active class from all buttons and contents
+
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
 
-            // Add active class to clicked button and corresponding content
+
             button.classList.add('active');
             const tabId = button.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
@@ -313,14 +326,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Avatar upload functionality (placeholder - you'd need to implement file upload)
-    avatarUpload.addEventListener('change', function(e) {
+
+    avatarUpload.addEventListener('change', function (e) {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
 
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 userAvatar.src = event.target.result;
-                // TODO: Implement actual file upload to server
+
                 console.log('Avatar upload would be implemented here');
             };
 
@@ -328,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Close modal when clicking outside of it
+
     window.addEventListener('click', (event) => {
         if (event.target === bioModal) {
             bioModal.style.display = 'none';
@@ -390,6 +403,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let statusClass = 'status-default';
             if (issue.estado) {
+
+
                 statusClass = `status-${issue.estado}`;
             }
 
@@ -425,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Sort by date (newest first)
+
         comments.sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified));
 
         comments.forEach(comment => {

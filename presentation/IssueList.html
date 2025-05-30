@@ -23,6 +23,7 @@
         <ul class="nav-links right">
             <li class="user-selector-nav">
                 <select id="user-dropdown">
+                    <option value="" disabled selected hidden>Selecciona usuario</option>
                 </select>
             </li>
         </ul>
@@ -57,7 +58,7 @@
         </div>
     </main>
 
-    <!-- MODAL NUEVO ISSUE -->
+
     <div id="issue-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" id="modal-close"><i class="bi bi-x-lg"></i></button>
@@ -112,19 +113,108 @@
 
                     <label>
                         Assigned To
-                        <select id="assignedUser"></select>
+                        <select id="assignedUser" multiple>
+                            <option value="" disabled hidden>Selecciona</option>
+                        </select>
+
                     </label>
 
                     <label>
                         Watchers
-                        <select id="watcherUser"></select>
+                        <select id="watcherUser" multiple>
+                            <option value="" disabled hidden>Selecciona</option>
+                        </select>
                     </label>
                 </div>
-
-                    <button type="submit" id="createBtn" class="btn primary wide button-save-issue">Crear</button>
+                <ul id="draftsList" class="drafts"></ul>
+                <button id="addIssueBtn" type="button" class="btn secondary wide">＋ Añadir otro</button>
+                <button id="createBtn" type="button" class="btn primary wide">Crear</button>
             </form>
         </div>
     </div>
+
+  
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" data-close="view"><i class="bi bi-x-lg"></i></button>
+            <h2>Detalle del issue</h2>
+
+            <form id="view-form">
+                <label>Subject           <input id="v-subject" disabled></label>
+
+                <label>
+                    Description
+                    <textarea id="v-desc" rows="3" disabled></textarea>
+                </label>
+
+                <div class="modal-row">
+                    <label class="d-flex col">
+                        Creation Date
+                        <input type="date" id="v-created" disabled>
+                    </label>
+                    <label class="d-flex col">
+                        Deadline
+                        <input type="date" id="v-deadline" disabled>
+                    </label>
+                </div>
+
+                <div class="modal-row">
+                    <label>Status   <select id="v-estado" disabled></select></label>
+                    <label>Type     <select id="v-tipo" disabled></select></label>
+                    <label>Priority <select id="v-prio" disabled></select></label>
+                    <label>Severity <select id="v-sev" disabled></select></label>
+                </div>
+
+                <div class="modal-row">
+                    <label>Assigned To <select id="v-assigned" multiple disabled></select></label>
+                    <label>Watchers    <select id="v-watchers" multiple disabled></select></label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" data-close="edit"><i class="bi bi-x-lg"></i></button>
+            <h2>Editar issue</h2>
+
+            <form id="edit-form">
+                <label>Subject <input id="e-subject" required></label>
+
+                <label>
+                    Description
+                    <textarea id="e-desc" rows="3" required></textarea>
+                </label>
+
+                <div class="modal-row">
+                    <label class="d-flex col">
+                        Creation Date
+                        <input type="date" id="e-created" required>
+                    </label>
+                    <label class="d-flex col">
+                        Deadline
+                        <input type="date" id="e-deadline">
+                    </label>
+                </div>
+
+                <div class="modal-row">
+                    <label>Status   <select id="e-estado"></select></label>
+                    <label>Type     <select id="e-tipo"></select></label>
+                    <label>Priority <select id="e-prio"></select></label>
+                    <label>Severity <select id="e-sev"></select></label>
+                </div>
+
+                <div class="modal-row">
+                    <label>Assigned To <select id="e-assigned" multiple></select></label>
+                    <label>Watchers    <select id="e-watchers" multiple></select></label>
+                </div>
+
+                <button id="saveEditBtn" type="button" class="btn warn wide">Guardar</button>
+            </form>
+        </div>
+    </div>
+
 
     <script src="/static/JS/IssueList.js"></script>
 </body>

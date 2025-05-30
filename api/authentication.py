@@ -1,14 +1,20 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from .models import User 
+from .models import User
 
 class APIKeyAuthentication(BaseAuthentication):
-
     HEADER = "X-API-Key"
+
+    class DRFUserWrapper:
+        def __init__(self, user):
+            self._user = user
+            self.is_authenticated = True
+
+        def __getattr__(self, attr):
+            return getattr(self._user, attr)
 
     def authenticate(self, request):
         key = request.headers.get(self.HEADER)
-        print("Cabecera recibida:", key)
         if not key:
             raise AuthenticationFailed("API key requerida")
 
@@ -17,4 +23,4 @@ class APIKeyAuthentication(BaseAuthentication):
         except User.DoesNotExist:
             raise AuthenticationFailed("API key invalida")
 
-        return (user, None)
+        return (self.DRFUserWrapper(user), None)

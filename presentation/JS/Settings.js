@@ -3,54 +3,73 @@ const API_BASE = "/api";
 const api_getTipos = `${API_BASE}/settings/tipos`
 const api_getEstados = `${API_BASE}/settings/estados`
 const api_getPrioridades = `${API_BASE}/settings/prioridades`
-const api_getSeveridades = `${API_BASE}/settings/severidades`
+const api_getSeveridades = `${API_BASE}/settings/severidades`;
 
+
+(function () {
+    var real = window.fetch.bind(window);
+
+    window.fetch = function (url, opts) {
+        opts = opts || {};
+        if (typeof url === "string" && url.indexOf(API_BASE) === 0) {
+            var key = localStorage.getItem("currentUserKey");
+            if (key) {
+                opts.headers = opts.headers || {};
+                opts.headers["X-API-Key"] = key;
+            }
+        }
+        return real(url, opts);
+    };
+})();
+
+
+async function fetchJson(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Error ${res.status} en ${url}: ${text}`);
+    }
+    return res.status === 204 ? null : await res.json();
+}
 
 /* -------- NAVBAR -------------------- */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     const userDropdown = document.getElementById('user-dropdown');
+    const usersCache = {};
 
-    // Load users from API
     async function loadUsers() {
-        try {
-            const response = await fetch(`${API_BASE}/users`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch users');
+        const users = await fetchJson(`${API_BASE}/users/`);
+
+        users.forEach(u => {
+            usersCache[u.id] = u.apikey;
+
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.nombre;
+            userDropdown.appendChild(opt);
+
+            if (u.selected) {
+                localStorage.setItem('currentUser', u.id);
+                localStorage.setItem('currentUserKey', u.apikey);
             }
+        });
 
-            const users = await response.json();
+        const saved = localStorage.getItem('currentUser');
+        if (saved) {
+            userDropdown.value = saved;
 
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = user.nombre;
-                userDropdown.appendChild(option);
-            });
-
-            // Set current user if exists
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                userDropdown.value = currentUser;
-            }
-
-        } catch (error) {
-            console.error('Error loading users:', error);
-            userDropdown.innerHTML = '<option value="">Error loading users</option>';
+            localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
 
-    // Handle user selection change
-    userDropdown.addEventListener('change', function() {
-        const selectedUser = this.value;
-        if (selectedUser) {
-            localStorage.setItem('currentUser', selectedUser);
-        }
+    userDropdown.addEventListener('change', e => {
+        const id = e.target.value;
+        localStorage.setItem('currentUser', id);
+        localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
-    // Initialize
     loadUsers();
 });
-
 /* ------------ Utilidades simples ---- */
 const $ = sel => document.querySelector(sel);
 const create = (tag, cls) => {
@@ -150,11 +169,11 @@ async function refrescarTipos() {
 }
 
 //crear tipus
-async function crearTipo()
-{
-    try{
+async function crearTipo() {
+    try {
         var nomT = document.getElementById("nom_tipo").value;
         const res = await fetch(`${API_BASE}/settings/createtipo/`,
+
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -168,10 +187,8 @@ async function crearTipo()
     }
 }
 //eliminar tipus
-async function eliminarTipo()
-{
-    try
-    {
+async function eliminarTipo() {
+    try {
         var tipo = document.getElementById("tipo_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("tipo_a_eliminar").options.item(tipo).value;
         if (document.getElementById("tipo_a_eliminar").options.length <= 1)
@@ -211,9 +228,8 @@ async function refrescarPrioridades() {
 }
 
 //crear prioridad
-async function crearPrioridad()
-{
-    try{
+async function crearPrioridad() {
+    try {
         var nomP = document.getElementById("nom_prio").value;
         var select1 = document.getElementById("prioridad_a_eliminar");
         var select2 = document.getElementById("prioridad_sustituta");
@@ -233,10 +249,8 @@ async function crearPrioridad()
 }
 
 //eliminar prioridad
-async function eliminarPrioridad()
-{
-    try
-    {
+async function eliminarPrioridad() {
+    try {
         var prio = document.getElementById("prioridad_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("prioridad_a_eliminar").options.item(prio).value;
         if (document.getElementById("prioridad_a_eliminar").options.length <= 1)
@@ -247,6 +261,7 @@ async function eliminarPrioridad()
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             }).then(res => res.json);
+
             alert("Se ha eliminado correctamente");
             document.getElementById("prioridad_a_eliminar").remove(prio);
             document.getElementById("prioridad_sustituta").remove(prio);
@@ -276,9 +291,8 @@ async function refrescarEstados() {
 }
 
 //crear estatus
-async function crearEstado()
-{
-    try{
+async function crearEstado() {
+    try {
         var nomE = document.getElementById("nom_estado").value;
         var select1 = document.getElementById("estado_a_eliminar");
         var select2 = document.getElementById("estado_sustituto");
@@ -288,6 +302,7 @@ async function crearEstado()
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomE})
         }).then(res => res.json);
+      
         document.getElementById("nom_estado").value = "";
         alert("se ha creado correctamente");
         refrescarEstados();
@@ -297,10 +312,8 @@ async function crearEstado()
 }
 
 //eliminar estatus
-async function eliminarEstado()
-{
-    try
-    {
+async function eliminarEstado() {
+    try {
         var estado = document.getElementById("estado_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("estado_a_eliminar").options.item(estado).value;
         if (document.getElementById("estado_a_eliminar").options.length <= 1)
@@ -340,9 +353,8 @@ function refrescarSeveridades() {
 }
 
 //crear severidad
-async function crearSeveridad()
-{
-    try{
+async function crearSeveridad() {
+    try {
         var nomS = document.getElementById("nom_sev").value;
         var select1 = document.getElementById("severidad_a_eliminar");
         var select2 = document.getElementById("severidad_sustituta");
@@ -361,10 +373,8 @@ async function crearSeveridad()
 }
 
 //eliminar severidad
-async function eliminarSeveridad()
-{
-    try
-    {
+async function eliminarSeveridad() {
+    try {
         var sev = document.getElementById("severidad_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("severidad_a_eliminar").options.item(sev).value;
         if (document.getElementById("severidad_a_eliminar").options.length <= 2)

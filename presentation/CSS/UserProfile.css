@@ -349,6 +349,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-height: 4rem;
 }
 
 .brand {
@@ -362,7 +363,7 @@ h1 {
     list-style: none;
     gap: 2rem;
     align-items: center;
-    margin-left: 3rem;
+    margin-left: 7rem;
 }
 
 .nav-links.right {
@@ -431,4 +432,11 @@ body {
     outline: none;
     border-color: #0d6efd;
     box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.user-apikey {
+    color: #666;
+    font-size: 0.9em;
+    margin: 0.5rem 0;
+    font-family: monospace; /* Para que se vea como código */
 }

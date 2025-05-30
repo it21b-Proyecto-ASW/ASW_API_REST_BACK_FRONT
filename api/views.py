@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes, authentication_classes
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +12,7 @@ from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import secrets
+from rest_framework.permissions import IsAuthenticated, AllowAny  
 
 from rest_framework import serializers
 from .models import (
@@ -44,8 +45,15 @@ from .serializers import (
 #   Serializadores de escritura (ids en lugar de objetos anidados)
 # --------------------------------------------------------------------
 class IssueWriteSerializer(serializers.ModelSerializer):
+    assignedTo = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        required=False
+    )
     watchers = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True, required=False
+        queryset=User.objects.all(),
+        many=True,
+        required=False
     )
     tipo = serializers.PrimaryKeyRelatedField(
         queryset=TipoIssue.objects.all(), required=False, allow_null=True, default=None
@@ -62,6 +70,7 @@ class IssueWriteSerializer(serializers.ModelSerializer):
     severidad = serializers.PrimaryKeyRelatedField(
         queryset=SeveridadIssue.objects.all(), required=False, allow_null=True, default=None
     )
+    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True, default=None, write_only=True,)
 
     class Meta:
         model = Issue
@@ -112,15 +121,22 @@ SETTING_MODEL_MAP = {
 )
 @api_view(['POST'])
 def create_issue(request):
-    """Crear un nuevo issue."""
-    serializer = IssueWriteSerializer(data=request.data)
+    """Crear un nuevo issue. El autor será el User marcado como selected=True."""
+    serializer = IssueWriteSerializer(data=request.data, partial=True) 
     serializer.is_valid(raise_exception=True)
 
-    with transaction.atomic():
-        issue = serializer.save(dateModified=timezone.now())
-        _update_m2m(issue, serializer.validated_data)
 
-        issue.refresh_from_db()
+    try:
+        selected_user = User.objects.get(selected=True)
+    except User.DoesNotExist:
+        return Response(
+            {"author": "No hay ningun usuario con selected=True"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    with transaction.atomic():
+        issue = serializer.save(author=selected_user, dateModified=timezone.now())
+        _update_m2m(issue, serializer.validated_data)
 
     return Response(IssueSerializer(issue).data, status=status.HTTP_201_CREATED)
 
@@ -295,7 +311,7 @@ def add_file_to_issue(request, issue_id: int):
 def delete_file_from_issue(request, file_id: int):
     """Elimina el IssueAttachment y la imagen asociada."""
     pivot = get_object_or_404(IssueAttachment, pk=file_id)
-    # borra primero el archivo físico
+
     pivot.image.file.delete(save=False)
     pivot.image.delete()
     pivot.delete()
@@ -381,6 +397,8 @@ def user_profile(request, user_id: int):
     operation_summary="Listar todos los usuarios",
 )
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def list_users(request):
     """Devuelve la lista completa de usuarios."""
     users = User.objects.all()
@@ -412,6 +430,7 @@ def edit_user_profile(request, user_id: int):
     operation_summary="Crear un usuario (apikey generada)",
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_user(request):
     """Crear un usuario y generar automaticamente su API-key."""
     serializer = UserWriteSerializer(data=request.data)
@@ -426,6 +445,7 @@ def create_user(request):
     operation_summary="Generar/aplicar una API-key aleatoria a un usuario",
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def assign_apikey_to_user(request, user_id: int):
     """Genera una nueva API-key random y la asigna al user indicado."""
     user = get_object_or_404(User, pk=user_id)
@@ -694,6 +714,7 @@ def delete_severidad(request, setting_id):
     operation_summary="Editar un setting existente."
 )
 @api_view(['PUT'])
+
 def edit_setting(request, setting_id):
     """Editar un setting existente (nombre)."""
     setting_type = request.query_params.get("setting_type")

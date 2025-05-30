@@ -30,6 +30,7 @@
     display: flex;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-height: 4rem;
 }
 
 .brand {
@@ -37,6 +38,7 @@
     font-weight: bold;
     color: #0d6efd;
     margin-right: 4rem;
+    margin-bottom: 0.75rem;
 }
 
 .nav-links {
@@ -44,6 +46,8 @@
     list-style: none;
     gap: 2rem;
     align-items: center;
+    margin-top: 0.25rem;
+    margin-left: 0.5rem;
 }
 
 .nav-links.right {
