@@ -9,3 +9,7 @@ def issue_list_view(request):
 def settings_list_view(request):
     html_path = os.path.join(settings.BASE_DIR, 'presentation', 'Settings.html')
     return FileResponse(open(html_path, 'rb'), content_type='text/html')
+
+def user_profile_view(request):
+    html_path = os.path.join(settings.BASE_DIR, 'presentation', 'UserProfile.html')
+    return FileResponse(open(html_path, 'rb'), content_type='text/html')

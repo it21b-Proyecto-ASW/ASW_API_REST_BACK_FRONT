@@ -45,5 +45,7 @@ urlpatterns = [
     path('IssueList/', issue_list_view),
     path('Settings/', settings_list_view),
 
+    path ('UserProfile/', user_profile_view),
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'presentation'))
