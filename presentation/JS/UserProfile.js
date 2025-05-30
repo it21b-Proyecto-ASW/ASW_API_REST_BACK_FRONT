@@ -265,6 +265,8 @@ document.addEventListener('DOMContentLoaded', function () {
         username.textContent = user.nombre;
         userHandle.textContent = `@${user.nombre.toLowerCase().replace(/\s+/g, '')}`;
         userBio.textContent = user.biography || 'No bio available';
+        const apikey = sessionStorage.getItem('apikey');
+        document.getElementById('user-apikey').textContent = `ApiKey: ${user.apikey || 'N/A'}`;
 
         if (user.photo) {
             userAvatar.src = user.photo;

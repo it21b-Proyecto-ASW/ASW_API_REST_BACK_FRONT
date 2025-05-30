@@ -433,3 +433,10 @@ body {
     border-color: #0d6efd;
     box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
 }
+
+.user-apikey {
+    color: #666;
+    font-size: 0.9em;
+    margin: 0.5rem 0;
+    font-family: monospace; /* Para que se vea como código */
+}
