@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes, authentication_classes
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -397,6 +397,7 @@ def user_profile(request, user_id: int):
     operation_summary="Listar todos los usuarios",
 )
 @api_view(['GET'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def list_users(request):
     """Devuelve la lista completa de usuarios."""
