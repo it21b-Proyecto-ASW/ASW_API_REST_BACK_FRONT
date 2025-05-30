@@ -36,29 +36,29 @@ async function fetchJson(url, opts = {}) {
 /* -------- NAVBAR -------------------- */
 document.addEventListener('DOMContentLoaded', () => {
     const userDropdown = document.getElementById('user-dropdown');
-    const usersCache = {}; 
+    const usersCache = {};
 
     async function loadUsers() {
         const users = await fetchJson(`${API_BASE}/users/`);
 
         users.forEach(u => {
-            usersCache[u.id] = u.apikey; 
+            usersCache[u.id] = u.apikey;
 
             const opt = document.createElement('option');
             opt.value = u.id;
             opt.textContent = u.nombre;
             userDropdown.appendChild(opt);
 
-            if (u.selected) { 
+            if (u.selected) {
                 localStorage.setItem('currentUser', u.id);
-                localStorage.setItem('currentUserKey', u.apikey); 
+                localStorage.setItem('currentUserKey', u.apikey);
             }
         });
 
         const saved = localStorage.getItem('currentUser');
         if (saved) {
             userDropdown.value = saved;
-            
+
             localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userDropdown.addEventListener('change', e => {
         const id = e.target.value;
         localStorage.setItem('currentUser', id);
-        localStorage.setItem('currentUserKey', usersCache[id] || ''); 
+        localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
     const logoutBtn = document.getElementById('logout-btn');
@@ -121,15 +121,12 @@ function fillSelect(selectSel, data, labelKey, valueKey) {
     });
 }
 
-function limpiarselects(sele1, sele2)
-{
+function limpiarselects(sele1, sele2) {
     var i, L = sele1.options.length - 1, R = sele2.options.length - 1;
-    for(i = L; i >= 0; i--)
-    {
+    for (i = L; i >= 0; i--) {
         sele1.remove(i);
     }
-    for(i = R; i >= 0; i--)
-    {
+    for (i = R; i >= 0; i--) {
         sele2.remove(i);
     }
 }
@@ -176,16 +173,15 @@ async function loadSeveridades() {
 }
 
 //crear tipus
-async function crearTipo()
-{
-    try{
+async function crearTipo() {
+    try {
         var nomT = document.getElementById("nom_tipo").value;
         const res = await fetch(`${API_BASE}/settings/createtipo/`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({nombre: nomT})
-        }).then(res => res.json());
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre: nomT })
+            }).then(res => res.json());
         document.getElementById("nom_tipo").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -193,20 +189,18 @@ async function crearTipo()
     }
 }
 //eliminar tipus
-async function eliminarTipo()
-{
-    try
-    {
+async function eliminarTipo() {
+    try {
         var tipo = document.getElementById("tipo_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("tipo_a_eliminar").options.item(tipo).value;
         if (document.getElementById("tipo_a_eliminar").options.length <= 1)
             alert("No se puede eliminar el último tipo")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deletetipo/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json());
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }).then(res => res.json());
             alert("se ha eliminado correctamente");
             document.getElementById("tipo_a_eliminar").remove(tipo);
             document.getElementById("tipo_sustituto").remove(tipo);
@@ -217,18 +211,17 @@ async function eliminarTipo()
 }
 
 //crear prioridad
-async function crearPrioridad()
-{
-    try{
+async function crearPrioridad() {
+    try {
         var nomP = document.getElementById("nom_prio").value;
         var select1 = document.getElementById("prioridad_a_eliminar");
         var select2 = document.getElementById("prioridad_sustituta");
         const res = await fetch(`${API_BASE}/settings/createprioridad/`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({nombre: nomP})
-        }).then(res => res.json());
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre: nomP })
+            }).then(res => res.json());
 
         document.getElementById("nom_prio").value = "";
         alert("se ha creado correctamente");
@@ -238,20 +231,18 @@ async function crearPrioridad()
 }
 
 //eliminar prioridad
-async function eliminarPrioridad()
-{
-    try
-    {
+async function eliminarPrioridad() {
+    try {
         var prio = document.getElementById("prioridad_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("prioridad_a_eliminar").options.item(prio).value;
         if (document.getElementById("prioridad_a_eliminar").options.length <= 1)
             alert("No se puede eliminar la última prioridad")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deleteprioridad/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json());
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }).then(res => res.json());
             alert("Se ha eliminado correctamente");
             document.getElementById("prioridad_a_eliminar").remove(prio);
             document.getElementById("prioridad_sustituta").remove(prio);
@@ -262,18 +253,17 @@ async function eliminarPrioridad()
 }
 
 //crear estatus
-async function crearEstado()
-{
-    try{
+async function crearEstado() {
+    try {
         var nomE = document.getElementById("nom_estado").value;
         var select1 = document.getElementById("estado_a_eliminar");
         var select2 = document.getElementById("estado_sustituto");
         const res = await fetch(`${API_BASE}/settings/createestado/`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({nombre: nomE})
-        }).then(res => res.json());
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre: nomE })
+            }).then(res => res.json());
         document.getElementById("nom_estado").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -282,20 +272,18 @@ async function crearEstado()
 }
 
 //eliminar estatus
-async function eliminarEstado()
-{
-    try
-    {
+async function eliminarEstado() {
+    try {
         var estado = document.getElementById("estado_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("estado_a_eliminar").options.item(estado).value;
         if (document.getElementById("estado_a_eliminar").options.length <= 1)
             alert("No se puede eliminar el último estado")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deleteestado/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json());
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }).then(res => res.json());
             alert("se ha eliminado correctamente");
             document.getElementById("estado_a_eliminar").remove(estado);
             document.getElementById("estado_sustituto").remove(estado);
@@ -306,18 +294,17 @@ async function eliminarEstado()
 }
 
 //crear severidad
-async function crearSeveridad()
-{
-    try{
+async function crearSeveridad() {
+    try {
         var nomS = document.getElementById("nom_sev").value;
         var select1 = document.getElementById("severidad_a_eliminar");
         var select2 = document.getElementById("severidad_sustituta");
-        const res = await fetch(`${API_BASE }/settings/createseveridad/`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({nombre: nomS})
-        }).then(res => res.json());
+        const res = await fetch(`${API_BASE}/settings/createseveridad/`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre: nomS })
+            }).then(res => res.json());
         document.getElementById("nom_sev").value = "";
         alert("se ha creado correctamente");
     } catch (err) {
@@ -326,20 +313,18 @@ async function crearSeveridad()
 }
 
 //eliminar severidad
-async function eliminarSeveridad()
-{
-    try
-    {
+async function eliminarSeveridad() {
+    try {
         var sev = document.getElementById("severidad_a_eliminar").options.selectedIndex;
         var setting_id = document.getElementById("severidad_a_eliminar").options.item(sev).value;
         if (document.getElementById("severidad_a_eliminar").options.length <= 2)
             alert("No se puede eliminar la última severidad")
         else {
             const res = await fetch(`${API_BASE}${setting_id.toString()}/deleteseveridad/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json());
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }).then(res => res.json());
 
             alert("se ha eliminado correctamente");
             document.getElementById("severidad_a_eliminar").remove(sev);

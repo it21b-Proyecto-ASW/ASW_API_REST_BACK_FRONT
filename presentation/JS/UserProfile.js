@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Configuration
     const API_BASE_URL = '/api';
 
@@ -38,12 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     })();
 
-   
+
     init();
 
     async function init() {
         try {
-           
+
             await loadAllUsers();
 
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await getAndStoreApiKey(firstUserId);
             }
 
-            
+
             await loadUserProfile();
             await loadAssignedIssues();
         } catch (error) {
@@ -91,15 +91,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function getAndStoreApiKey(userId) {
         try {
-            
+
             const response = await apiRequest(`/users/${userId}/assign-apikey/`, {
                 method: 'POST'
             });
 
-            
+
             sessionStorage.setItem('user_id', userId);
             sessionStorage.setItem('apikey', response.apikey);
-            localStorage.setItem('currentUserKey', response.apikey); 
+            localStorage.setItem('currentUserKey', response.apikey);
 
             console.log(`User ID ${userId} and API key stored in session storage`);
             return response.apikey;
@@ -110,20 +110,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    
-    userDropdown.addEventListener('change', async function() {
+
+    userDropdown.addEventListener('change', async function () {
         const selectedUserId = this.value;
         if (!selectedUserId) return;
 
         try {
-            
+
             await getAndStoreApiKey(selectedUserId);
 
-            
+
             await loadUserProfile();
             await loadAssignedIssues();
 
-            
+
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector('[data-tab="assigned-issues"]').classList.add('active');
@@ -134,13 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
+
     async function apiRequest(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
-               
+
             }
         };
 
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
 
-      
+
         if (response.status === 204) {
             return null;
         }
@@ -279,18 +279,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showError(message) {
-     
+
         alert(message);
     }
 
-    
+
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            
+
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
 
-           
+
             button.classList.add('active');
             const tabId = button.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
@@ -324,14 +324,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
-    avatarUpload.addEventListener('change', function(e) {
+
+    avatarUpload.addEventListener('change', function (e) {
         if (e.target.files && e.target.files[0]) {
             const reader = new FileReader();
 
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 userAvatar.src = event.target.result;
-               
+
                 console.log('Avatar upload would be implemented here');
             };
 
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
+
     window.addEventListener('click', (event) => {
         if (event.target === bioModal) {
             bioModal.style.display = 'none';
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Determine status class based on estado
             let statusClass = 'status-default';
             if (issue.estado) {
-                
+
                 statusClass = `status-${issue.estado}`;
             }
 
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-     
+
         comments.sort((a, b) => new Date(b.dateModified) - new Date(a.dateModified));
 
         comments.forEach(comment => {

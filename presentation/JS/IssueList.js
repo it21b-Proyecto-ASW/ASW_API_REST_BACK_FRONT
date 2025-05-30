@@ -32,13 +32,13 @@ const create = (tag, cls) => Object.assign(document.createElement(tag), { classN
 /* -------- NAVBAR -------------------- */
 document.addEventListener('DOMContentLoaded', () => {
     const userDropdown = document.getElementById('user-dropdown');
-    const usersCache = {};              
+    const usersCache = {};
 
     async function loadUsers() {
         const users = await fetchJson(`${API_BASE}/users/`);
 
         users.forEach(u => {
-            usersCache[u.id] = u.apikey; 
+            usersCache[u.id] = u.apikey;
 
             const opt = document.createElement('option');
             opt.value = u.id;
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('currentUser');
         if (saved) {
             userDropdown.value = saved;
-            
+
             localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userDropdown.addEventListener('change', e => {
         const id = e.target.value;
         localStorage.setItem('currentUser', id);
-        localStorage.setItem('currentUserKey', usersCache[id] || ''); 
+        localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
     const logoutBtn = document.getElementById('logout-btn');
@@ -97,16 +97,16 @@ async function loadFilterOptions() {
 
 function fillSelect(selector, data, labelKey, valueKey, selected = null) {
     const selEl = $(selector);
-    selEl.innerHTML = ''; 
+    selEl.innerHTML = '';
 
- 
-    const ph = document.createElement('option');   
+
+    const ph = document.createElement('option');
     ph.textContent = 'Selecciona';
     ph.value = '';
     ph.disabled = true;
     ph.hidden = true;
-    ph.selected = !selected;                     
-    selEl.appendChild(ph);                       
+    ph.selected = !selected;
+    selEl.appendChild(ph);
 
     // opciones reales
     data.forEach(item => {
@@ -195,7 +195,7 @@ async function createIssue() {
 
     const subject = $("#subject").value.trim();
     const description = $("#description").value.trim();
-    const creationDate = $("#creationDate").value; 
+    const creationDate = $("#creationDate").value;
 
     if (!subject) errors.push("El campo Subject es obligatorio.");
     if (subject.length > 20) errors.push("Subject no puede superar 20 caracteres.");
@@ -205,7 +205,7 @@ async function createIssue() {
 
     if (errors.length) {
         alert(errors.join("\n"));
-        return; 
+        return;
     }
 
 
@@ -217,7 +217,7 @@ async function createIssue() {
     const payload = {
         nombre: subject,
         description: description,
-        creationDate: creationDate, 
+        creationDate: creationDate,
         estado: $("#estado").value ? Number($("#estado").value) : null,
         tipo: $("#tipo").value ? Number($("#tipo").value) : null,
         prioridad: $("#prioridad").value ? Number($("#prioridad").value) : null,
@@ -393,11 +393,11 @@ window.addEventListener("click", e => {
     if (e.target.classList.contains("modal")) e.target.classList.remove("show");
 });
 
-const drafts = [];              
+const drafts = [];
 
-function readForm() {          
+function readForm() {
     const required = $("#subject").value.trim();
-    if (!required) return null;  
+    if (!required) return null;
     const errors = [];
 
     if (required.length > 20) errors.push("«Subject» supera 20 caracteres.");
@@ -427,7 +427,7 @@ $("#addIssueBtn").addEventListener("click", () => {
     if (!payload) return;
 
     drafts.push(payload);
-    renderDrafts();      
+    renderDrafts();
     form.reset();
 
 
@@ -435,7 +435,7 @@ $("#addIssueBtn").addEventListener("click", () => {
 });
 
 async function createIssue() {
-    const last = readForm(); 
+    const last = readForm();
     if (last) drafts.push(last);
 
     if (!drafts.length) { alert("No hay ningún issue para crear."); return; }
@@ -463,13 +463,13 @@ async function createIssue() {
     }
 
     drafts.length = 0;
-    renderDrafts();  
+    renderDrafts();
     modal.classList.remove("show");
     form.reset();
     await loadIssues();
 }
 
-                  
+
 
 function renderDrafts() {
     const list = $("#draftsList");
