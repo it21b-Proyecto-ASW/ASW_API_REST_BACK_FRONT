@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: API_ASW
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: ASW_API_REST_BACK_FRONT.settings
+      - key: SECRET_KEY
+        value: 24cc2a3a-0c48-449a-90b3-2dd19fc401e9
+      - key: DEBUG
+        value: "False"
