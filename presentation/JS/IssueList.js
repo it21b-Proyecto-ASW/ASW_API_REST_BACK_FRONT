@@ -65,14 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function () {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
-        });
-    }
 
+    // Initialize
     loadUsers();
 });
 
