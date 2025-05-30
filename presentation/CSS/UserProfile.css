@@ -349,6 +349,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-height: 4rem;
 }
 
 .brand {
@@ -362,7 +363,7 @@ h1 {
     list-style: none;
     gap: 2rem;
     align-items: center;
-    margin-left: 3rem;
+    margin-left: 7rem;
 }
 
 .nav-links.right {

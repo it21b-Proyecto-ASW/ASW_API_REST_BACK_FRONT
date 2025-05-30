@@ -1,0 +1,105 @@
+diff a/presentation/JS/UserProfile.js b/presentation/JS/UserProfile.js	(rejected hunks)
+@@ -26,37 +26,77 @@
+ 
+     // Initialize the page
+     init();
++    document.addEventListener("DOMContentLoaded", () => {
++        /* ------------ Config ------------ */
++        const API_BASE = "/api";
++
++        /* ------------ Interceptor global de fetch ------------ */
++        (function () {
++            const realFetch = window.fetch.bind(window);
++            window.fetch = (url, opts = {}) => {
++                if (typeof url === "string" && url.startsWith(API_BASE)) {
++                    const key = localStorage.getItem("currentUserKey");
++                    if (key) opts.headers = { ...(opts.headers || {}), "X-API-Key": key };
++                }
++                return realFetch(url, opts);
++            };
++        })();
++
++        /* ------------ �NICA funci�n apiRequest ------------ */
++        async function apiRequest(endpoint, options = {}) {
++            const resp = await fetch(`${API_BASE}${endpoint}`, {
++                headers: { "Content-Type": "application/json", ...(options.headers || {}) },
++                ...options,
++            });
++            if (!resp.ok) throw new Error(`API ${resp.status} ${resp.statusText}`);
++            return resp.status === 204 ? null : resp.json();
++        }
++
++    
++    document.addEventListener("DOMContentLoaded", init);
+ 
+     async function init() {
+-        try {
+-            // Load all users first
+-            await loadAllUsers();
+-
+-            // Check if we have a user in session storage
+-            const storedUserId = sessionStorage.getItem('user_id');
+-
+-            if (storedUserId) {
+-                // Use stored user
+-                userDropdown.value = storedUserId;
+-            } else if (allUsers.length > 0) {
+-                // Use first user as default
+-                const firstUserId = allUsers[0].id;
+-                userDropdown.value = firstUserId;
+-
+-                // Get and store API key for first user
+-                await getAndStoreApiKey(firstUserId);
+-            }
++        const userDD = document.getElementById("user-dropdown");
++        const logout = document.getElementById("logout-btn");
++
++        
++        const users = await apiRequest("/users/");
++        userDD.innerHTML = users.map(u => `<option value="${u.id}">${u.nombre}</option>`).join("");
++
++        
++        const savedId = localStorage.getItem("currentUser") ?? users[0].id;
++        userDD.value = savedId;
++        await setCurrentUser(savedId);
++
++       
++        userDD.addEventListener("change", e => setCurrentUser(e.target.value).then(loadAll));
++        logout?.addEventListener("click", () => {
++            localStorage.removeItem("currentUser");
++            localStorage.removeItem("currentUserKey");
++            location.href = "login.html";
++        });
+ 
+-            // Load profile for selected user
+-            await loadUserProfile();
+-            await loadAssignedIssues();
+-        } catch (error) {
+-            console.error('Error initializing profile:', error);
+-            showError('Failed to load user profile');
+-        }
++       
++        await loadAll();
+     }
+ 
+-    // User Management Functions
++    
++    async function setCurrentUser(id) {
++        const { apikey } = await apiRequest(`/users/${id}/assign-apikey/`, { method: "POST" });
++        localStorage.setItem("currentUser", id);
++        localStorage.setItem("currentUserKey", apikey);
++        sessionStorage.setItem("user_id", id);         
++    }
++
++   
++    async function loadAll() {
++        await Promise.all([
++            loadUserProfile(),
++            loadAssignedIssues(),
++            loadWatchedIssues(),
++            loadComments(),
++        ]);
++    }
+     async function loadAllUsers() {
+         try {
+             allUsers = await apiRequest('/users/');

@@ -1,68 +1,89 @@
-/* =========================================================================
-   Issue List � l�gica de frontend
-   ======================================================================= */
+
 
 const API_BASE = "/api";
+(function () {
+    var real = window.fetch.bind(window);
 
-/* ------------ Utilidades r�pidas ---------------- */
+    window.fetch = function (url, opts) {
+        opts = opts || {};
+        if (typeof url === "string" && url.indexOf(API_BASE) === 0) {
+            var key = localStorage.getItem("currentUserKey");
+            if (key) {
+                opts.headers = opts.headers || {};
+                opts.headers["X-API-Key"] = key;
+            }
+        }
+        return real(url, opts);
+    };
+})();
+
+const fetchJson = async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Error ${res.status} en ${url}: ${text}`);
+    }
+    return res.json();
+};
+
 const $ = sel => document.querySelector(sel);
 const create = (tag, cls) => Object.assign(document.createElement(tag), { className: cls ?? "" });
 
 /* -------- NAVBAR -------------------- */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     const userDropdown = document.getElementById('user-dropdown');
+    const usersCache = {};
 
-    // Load users from API
     async function loadUsers() {
-        try {
-            const response = await fetch(`${API_BASE}/users`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch users');
+        const users = await fetchJson(`${API_BASE}/users/`);
+
+        users.forEach(u => {
+            usersCache[u.id] = u.apikey;
+
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.nombre;
+            userDropdown.appendChild(opt);
+
+            if (u.selected) {
+                localStorage.setItem('currentUser', u.id);
+                localStorage.setItem('currentUserKey', u.apikey);
             }
+        });
 
-            const users = await response.json();
+        const saved = localStorage.getItem('currentUser');
+        if (saved) {
+            userDropdown.value = saved;
 
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = user.nombre;
-                userDropdown.appendChild(option);
-            });
-
-            // Set current user if exists
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                userDropdown.value = currentUser;
-            }
-
-        } catch (error) {
-            console.error('Error loading users:', error);
-            userDropdown.innerHTML = '<option value="">Error loading users</option>';
+            localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
 
-    // Handle user selection change
-    userDropdown.addEventListener('change', function() {
-        const selectedUser = this.value;
-        if (selectedUser) {
-            localStorage.setItem('currentUser', selectedUser);
-        }
+    userDropdown.addEventListener('change', e => {
+        const id = e.target.value;
+        localStorage.setItem('currentUser', id);
+        localStorage.setItem('currentUserKey', usersCache[id] || '');
     });
 
-    // Initialize
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+    }
+
     loadUsers();
 });
 
-/* ======================================================================
-   1.  SELECTS DE FILTRO (parte superior de la lista)
-   ====================================================================== */
+
 async function loadFilterOptions() {
     try {
         const [tipos, estados, prioridades, severidades] = await Promise.all([
-            fetch(`${API_BASE}/settings/tipos`).then(r => r.json()),
-            fetch(`${API_BASE}/settings/estados`).then(r => r.json()),
-            fetch(`${API_BASE}/settings/prioridades`).then(r => r.json()),
-            fetch(`${API_BASE}/settings/severidades`).then(r => r.json()),
+            fetchJson(`${API_BASE}/settings/tipos`),
+            fetchJson(`${API_BASE}/settings/estados`),
+            fetchJson(`${API_BASE}/settings/prioridades`),
+            fetchJson(`${API_BASE}/settings/severidades`),
         ]);
 
         fillSelect("#filter-type", tipos, "nombre", "id");
@@ -76,16 +97,16 @@ async function loadFilterOptions() {
 
 function fillSelect(selector, data, labelKey, valueKey, selected = null) {
     const selEl = $(selector);
-    selEl.innerHTML = '';                          // vaciar siempre
+    selEl.innerHTML = '';
 
- 
-    const ph = document.createElement('option');   
+
+    const ph = document.createElement('option');
     ph.textContent = 'Selecciona';
     ph.value = '';
     ph.disabled = true;
     ph.hidden = true;
-    ph.selected = !selected;                     
-    selEl.appendChild(ph);                       
+    ph.selected = !selected;
+    selEl.appendChild(ph);
 
     // opciones reales
     data.forEach(item => {
@@ -97,9 +118,7 @@ function fillSelect(selector, data, labelKey, valueKey, selected = null) {
     });
 }
 
-/* ======================================================================
-   2.  CARGAR Y RENDERIZAR ISSUES
-   ====================================================================== */
+
 async function loadIssues() {
     try {
         const params = new URLSearchParams();
@@ -158,11 +177,6 @@ async function loadModalOptions() {
 }
 
 
-
-
-/* ======================================================================
-   4.  EVENTOS GENERALES / INICIALIZACION
-   ====================================================================== */
 $("#search-btn").addEventListener("click", loadIssues);
 $("#filter-btn").addEventListener("click", loadIssues);
 $("#search-input").addEventListener("keypress", e => { if (e.key === "Enter") loadIssues(); });
@@ -181,17 +195,17 @@ async function createIssue() {
 
     const subject = $("#subject").value.trim();
     const description = $("#description").value.trim();
-    const creationDate = $("#creationDate").value; 
+    const creationDate = $("#creationDate").value;
 
-    if (!subject) errors.push("El campo �Subject� es obligatorio.");
-    if (subject.length > 20) errors.push("�Subject� no puede superar 20 caracteres.");
+    if (!subject) errors.push("El campo Subject es obligatorio.");
+    if (subject.length > 20) errors.push("Subject no puede superar 20 caracteres.");
 
-    if (!description) errors.push("El campo �Description� es obligatorio.");
-    if (!creationDate) errors.push("Debes seleccionar la �Creation Date�.");
+    if (!description) errors.push("El campo Description es obligatorio.");
+    if (!creationDate) errors.push("Debes seleccionar la Creation Date.");
 
     if (errors.length) {
         alert(errors.join("\n"));
-        return; 
+        return;
     }
 
 
@@ -203,7 +217,7 @@ async function createIssue() {
     const payload = {
         nombre: subject,
         description: description,
-        creationDate: creationDate,                                   // NUEVO
+        creationDate: creationDate,
         estado: $("#estado").value ? Number($("#estado").value) : null,
         tipo: $("#tipo").value ? Number($("#tipo").value) : null,
         prioridad: $("#prioridad").value ? Number($("#prioridad").value) : null,
@@ -237,7 +251,7 @@ async function createIssue() {
 }
 
 $("#createBtn").addEventListener("click", createIssue);
-/* ===== helpers reutilizables ========================================= */
+
 const multi = sel => Array.from($(sel).selectedOptions)
     .map(o => +o.value).filter(Boolean);
 
@@ -276,7 +290,7 @@ function fill(sel, data, selected) {
     });
 }
 
-/* ===== View =========================================================== */
+
 async function openView(id) {
     const data = await fetch(`${API_BASE}/issues/${id}/`).then(r => r.json());
     const [estados, tipos, prio, sev, users] = await lookups();
@@ -299,7 +313,7 @@ async function openView(id) {
     $("#view-modal").classList.add("show");
 }
 
-/* ===== Edit =========================================================== */
+
 let editId = null;
 
 async function openEdit(id) {
@@ -352,7 +366,7 @@ $("#saveEditBtn").addEventListener("click", async () => {
     await loadIssues();
 });
 
-/* ===== Tarjetas con botones View / Edit ============================== */
+
 function renderIssues(issues) {
     const list = $("#issue-list"); list.innerHTML = "";
     if (!issues.length) { list.textContent = "No se han encontrado issues."; return; }
@@ -379,11 +393,11 @@ window.addEventListener("click", e => {
     if (e.target.classList.contains("modal")) e.target.classList.remove("show");
 });
 
-const drafts = [];              
+const drafts = [];
 
-function readForm() {          
+function readForm() {
     const required = $("#subject").value.trim();
-    if (!required) return null;  
+    if (!required) return null;
     const errors = [];
 
     if (required.length > 20) errors.push("«Subject» supera 20 caracteres.");
@@ -413,7 +427,7 @@ $("#addIssueBtn").addEventListener("click", () => {
     if (!payload) return;
 
     drafts.push(payload);
-    renderDrafts();      
+    renderDrafts();
     form.reset();
 
 
@@ -421,7 +435,7 @@ $("#addIssueBtn").addEventListener("click", () => {
 });
 
 async function createIssue() {
-    const last = readForm();                 // lee lo que esté visible
+    const last = readForm();
     if (last) drafts.push(last);
 
     if (!drafts.length) { alert("No hay ningún issue para crear."); return; }
@@ -449,13 +463,13 @@ async function createIssue() {
     }
 
     drafts.length = 0;
-    renderDrafts();               // limpia la lista comprimida
+    renderDrafts();
     modal.classList.remove("show");
     form.reset();
     await loadIssues();
 }
 
-                  
+
 
 function renderDrafts() {
     const list = $("#draftsList");
@@ -473,3 +487,4 @@ function removeDraft(idx) {
     drafts.splice(idx, 1);
     renderDrafts();
 }
+

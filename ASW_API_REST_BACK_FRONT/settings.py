@@ -42,6 +42,12 @@ INSTALLED_APPS = [
     'drf_yasg',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'api.authentication.APIKeyAuthentication',
+    ],
+}
+
 # Middleware framework
 # https://docs.djangoproject.com/en/2.1/topics/http/middleware/
 MIDDLEWARE = [
