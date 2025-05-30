@@ -6,6 +6,14 @@
     <title>Configuració</title>
     <link rel="stylesheet" href="/static/CSS/Settings.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .delete-form {
+            border: 2px solid #4e4e4e !important; /* Azul cielo */
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -50,12 +58,6 @@
                             <option value="">Selecciona un tipus a eliminar</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <select id="tipo_sustituto" class="form-select" >
-                            <option value="">Selecciona un tipus de reemplaçament</option>
-                        </select>
-                        <small class="text-muted">Aquest tipus reemplaçarà l'eliminat en totes les issues</small>
-                    </div>
                     <button type="submit" class="btn btn-danger" onclick="eliminarTipo()">Eliminar</button>
             </div>
         </div>
@@ -78,12 +80,6 @@
                         <select id="estado_a_eliminar" class="form-select" required>
                             <option value="">Selecciona un estat a eliminar</option>
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <select id="estado_sustituto" class="form-select">
-                            <option value="">Selecciona un estat de reemplaçament</option>
-                        </select>
-                        <small class="text-muted">Aquest estat reemplaçarà l'eliminat en totes les issues</small>
                     </div>
                     <button type="submit" class="btn btn-danger" onclick="eliminarEstado()">Eliminar</button>
             </div>
@@ -108,12 +104,6 @@
                             <option value="">Selecciona una prioritat a eliminar</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <select id="prioridad_sustituta" class="form-select">
-                            <option value="">Selecciona una prioritat de reemplaçament</option>
-                        </select>
-                        <small class="text-muted">Aquesta prioritat reemplaçarà l'eliminada en totes les issues</small>
-                    </div>
                     <button type="submit" class="btn btn-danger" onclick="eliminarPrioridad()">Eliminar</button>
             </div>
         </div>
@@ -137,14 +127,7 @@
                             <option value="">Selecciona una severitat a eliminar</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <select id="severidad_sustituta" class="form-select">
-                            <option value="">Selecciona una severitat de reemplaçament</option>
-                        </select>
-                        <small class="text-muted">Aquesta severitat reemplaçarà l'eliminada en totes les issues</small>
-                    </div>
                     <button type="submit" class="btn btn-danger" onclick="eliminarSeveridad()">Eliminar</button>
-                </form>
             </div>
         </div>
     </div>

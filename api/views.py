@@ -578,16 +578,16 @@ def create_estado(request):
 @swagger_auto_schema(
     method='delete',
     manual_parameters=[
-        openapi.Parameter('id', openapi.IN_PATH, description="ID del estado", type=openapi.TYPE_INTEGER)
+        openapi.Parameter('setting_id', openapi.IN_PATH, description="ID del estado", type=openapi.TYPE_INTEGER)
     ],
     responses={200: openapi.Response("Deleted")},
     operation_summary="Eliminar un estado."
 )
 @api_view(['DELETE'])
-def delete_estado(request, id):
+def delete_estado(request, setting_id):
     """Eliminar un estado."""
     try:
-        estado = EstadoIssue.objects.get(pk=id)
+        estado = EstadoIssue.objects.get(pk=setting_id)
     except EstadoIssue.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     estado.delete()
