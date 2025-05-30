@@ -83,13 +83,25 @@ async function loadFilterOptions() {
     }
 }
 
-function fillSelect(selector, data, labelKey, valueKey) {
+function fillSelect(selector, data, labelKey, valueKey, selected = null) {
     const selEl = $(selector);
-    selEl.innerHTML = '<option value="" disabled selected hidden>Selecciona</option>';
+    selEl.innerHTML = '';                          // vaciar siempre
+
+ 
+    const ph = document.createElement('option');   
+    ph.textContent = 'Selecciona';
+    ph.value = '';
+    ph.disabled = true;
+    ph.hidden = true;
+    ph.selected = !selected;                     
+    selEl.appendChild(ph);                       
+
+    // opciones reales
     data.forEach(item => {
         const opt = create("option");
         opt.value = item[valueKey];
         opt.textContent = item[labelKey];
+        if (+item[valueKey] === +selected) opt.selected = true;
         selEl.appendChild(opt);
     });
 }
@@ -118,33 +130,8 @@ async function loadIssues() {
 
 const appendIf = (params, key, value) => value && params.append(key, value);
 
-function renderIssues(issues) {
-    const list = $("#issue-list");
-    list.innerHTML = "";
 
-    if (issues.length === 0) {
-        list.textContent = "No se han encontrado issues.";
-        return;
-    }
 
-    issues.forEach(issue => {
-        const card = create("div", "issue-card");
-        const title = create("h3");
-        title.textContent = issue.nombre;          //  campo de tu API
-        card.appendChild(title);
-
-        const view = create("a", "btn primary");
-        view.href = `Issue.html?id=${issue.id}`;
-        view.textContent = "View";
-        card.appendChild(view);
-
-        list.appendChild(card);
-    });
-}
-
-/* ======================================================================
-   3.  MODAL "NUEVO ISSUE"
-   ====================================================================== */
 const modal = $("#issue-modal");
 const openBtn = $("#new-issue-btn");
 const closeBtn = $("#modal-close");
@@ -158,7 +145,6 @@ openBtn.addEventListener("click", async () => {
 closeBtn.addEventListener("click", () => modal.classList.remove("show"));
 modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("show"); });
 
-/* ---- selects del modal ------------------------------------------------ */
 async function loadModalOptions() {
     try {
         const [estados, tipos, prioridades, severidades, usuarios] = await Promise.all([
@@ -180,39 +166,8 @@ async function loadModalOptions() {
     }
 }
 
-/* ---- envio del formulario -------------------------------------------- */
-form.addEventListener("submit", async e => {
-    e.preventDefault();
 
-    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
 
-    const payload = {
-        nombre: $("#subject").value.trim(),
-        description: $("#description").value.trim(),
-        estado: $("#estado").value || null,
-        tipo: $("#tipo").value || null,
-        prioridad: $("#prioridad").value || null,
-        severidad: $("#severidad").value || null,
-        deadline: $("#deadline").value || null,
-        assignedTo: multi("#assignedUser"),
-        watchers: multi("#watcherUser"),
-        // author lo pones en el backend con request.user o similar
-    };
-
-    try {
-        const res = await fetch(`${API_BASE}/issues/create/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Error al crear issue");
-        modal.classList.remove("show");
-        form.reset();
-        await loadIssues();
-    } catch (err) {
-        alert(err.message);
-    }
-});
 
 /* ======================================================================
    4.  EVENTOS GENERALES / INICIALIZACION
@@ -249,7 +204,10 @@ async function createIssue() {
     }
 
 
-    const multi = sel => Array.from($(sel).selectedOptions).map(o => Number(o.value));
+    const multi = sel => Array.from($(sel).selectedOptions)
+        .map(o => o.value)
+        .filter(v => v !== "")
+        .map(Number);
 
     const payload = {
         nombre: subject,
@@ -288,5 +246,239 @@ async function createIssue() {
 }
 
 $("#createBtn").addEventListener("click", createIssue);
+/* ===== helpers reutilizables ========================================= */
+const multi = sel => Array.from($(sel).selectedOptions)
+    .map(o => +o.value).filter(Boolean);
+
+function setMulti(sel, values = []) {
+    Array.from($(sel).options).forEach(o => {
+        o.selected = values.includes(+o.value);
+    });
+}
+
+async function lookups() {
+    return Promise.all([
+        fetch(`${API_BASE}/settings/estados`).then(r => r.json()),
+        fetch(`${API_BASE}/settings/tipos`).then(r => r.json()),
+        fetch(`${API_BASE}/settings/prioridades`).then(r => r.json()),
+        fetch(`${API_BASE}/settings/severidades`).then(r => r.json()),
+        fetch(`${API_BASE}/users/`).then(r => r.json())
+    ]);
+}
+
+function fill(sel, data, selected) {
+    sel.innerHTML = "";
+
+    const placeholder = create("option");
+    placeholder.textContent = "Selecciona";
+    placeholder.disabled = true;
+    placeholder.hidden = true;
+    placeholder.selected = selected === null || selected === undefined;
+    sel.appendChild(placeholder);
+
+    data.forEach(it => {
+        const opt = create("option");
+        opt.value = it.id;
+        opt.textContent = it.nombre;
+        if (+it.id === +selected) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+/* ===== View =========================================================== */
+async function openView(id) {
+    const data = await fetch(`${API_BASE}/issues/${id}/`).then(r => r.json());
+    const [estados, tipos, prio, sev, users] = await lookups();
+
+    $("#v-subject").value = data.nombre;
+    $("#v-desc").value = data.description;
+    $("#v-created").value = data.creationDate ?? "";
+    $("#v-deadline").value = data.deadline ?? "";
+
+    fill($("#v-estado"), estados, data.estado);
+    fill($("#v-tipo"), tipos, data.tipo);
+    fill($("#v-prio"), prio, data.prioridad);
+    fill($("#v-sev"), sev, data.severidad);
+
+    fill($("#v-assigned"), users);
+    fill($("#v-watchers"), users);
+    setMulti("#v-assigned", data.assignedTo || []);
+    setMulti("#v-watchers", data.watchers || []);
+
+    $("#view-modal").classList.add("show");
+}
+
+/* ===== Edit =========================================================== */
+let editId = null;
+
+async function openEdit(id) {
+    editId = id;
+    const data = await fetch(`${API_BASE}/issues/${id}/`).then(r => r.json());
+    const [estados, tipos, prio, sev, users] = await lookups();
+
+    $("#e-subject").value = data.nombre;
+    $("#e-desc").value = data.description;
+    $("#e-created").value = data.creationDate ?? "";
+    $("#e-deadline").value = data.deadline ?? "";
+
+    fill($("#e-estado"), estados, data.estado);
+    fill($("#e-tipo"), tipos, data.tipo);
+    fill($("#e-prio"), prio, data.prioridad);
+    fill($("#e-sev"), sev, data.severidad);
+
+    fill($("#e-assigned"), users);
+    fill($("#e-watchers"), users);
+    setMulti("#e-assigned", data.assignedTo || []);
+    setMulti("#e-watchers", data.watchers || []);
+
+    $("#edit-modal").classList.add("show");
+}
+
+$("#saveEditBtn").addEventListener("click", async () => {
+    if (!editId) return;
+
+    const payload = {
+        nombre: $("#e-subject").value.trim(),
+        description: $("#e-desc").value.trim(),
+        creationDate: $("#e-created").value || null,
+        deadline: $("#e-deadline").value || null,
+        estado: $("#e-estado").value || null,
+        tipo: $("#e-tipo").value || null,
+        prioridad: $("#e-prio").value || null,
+        severidad: $("#e-sev").value || null,
+        assignedTo: multi("#e-assigned"),
+        watchers: multi("#e-watchers"),
+    };
+
+    const res = await fetch(`${API_BASE}/issues/${editId}/edit/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) { alert("Error al guardar cambios"); return; }
+    $("#edit-modal").classList.remove("show");
+    await loadIssues();
+});
+
+/* ===== Tarjetas con botones View / Edit ============================== */
+function renderIssues(issues) {
+    const list = $("#issue-list"); list.innerHTML = "";
+    if (!issues.length) { list.textContent = "No se han encontrado issues."; return; }
+
+    issues.forEach(it => {
+        const card = create("div", "issue-card");
+        card.appendChild(Object.assign(create("h3"), { textContent: it.nombre }));
+
+        const bEdit = create("button", "btn warn"); bEdit.textContent = "Edit";
+        bEdit.onclick = () => openEdit(it.id); card.appendChild(bEdit);
+
+        const bView = create("button", "btn primary"); bView.textContent = "View";
+        bView.onclick = () => openView(it.id); card.appendChild(bView);
+
+        list.appendChild(card);
+    });
+}
 
 
+document.querySelectorAll("[data-close]").forEach(b => {
+    b.addEventListener("click", () => $("#" + b.dataset.close + "-modal").classList.remove("show"));
+});
+window.addEventListener("click", e => {
+    if (e.target.classList.contains("modal")) e.target.classList.remove("show");
+});
+
+const drafts = [];              
+
+function readForm() {          
+    const required = $("#subject").value.trim();
+    if (!required) return null;  
+    const errors = [];
+
+    if (required.length > 20) errors.push("«Subject» supera 20 caracteres.");
+    if (!$("#description").value.trim()) errors.push("Description es obligatoria.");
+    if (!$("#creationDate").value) errors.push("Creation Date es obligatoria.");
+
+    if (errors.length) { alert(errors.join("\n")); return null; }
+
+    const multi = sel => Array.from($(sel).selectedOptions).map(o => +o.value).filter(Boolean);
+
+    return {
+        nombre: required,
+        description: $("#description").value.trim(),
+        creationDate: $("#creationDate").value,
+        deadline: $("#deadline").value || null,
+        estado: $("#estado").value || null,
+        tipo: $("#tipo").value || null,
+        prioridad: $("#prioridad").value || null,
+        severidad: $("#severidad").value || null,
+        assignedTo: multi("#assignedUser"),
+        watchers: multi("#watcherUser")
+    };
+}
+
+$("#addIssueBtn").addEventListener("click", () => {
+    const payload = readForm();
+    if (!payload) return;
+
+    drafts.push(payload);
+    renderDrafts();      
+    form.reset();
+
+
+    form.querySelectorAll("select").forEach(s => s.selectedIndex = 0);
+});
+
+async function createIssue() {
+    const last = readForm();                 // lee lo que esté visible
+    if (last) drafts.push(last);
+
+    if (!drafts.length) { alert("No hay ningún issue para crear."); return; }
+
+    let res = await fetch(`${API_BASE}/issues/bulk_insert/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(drafts)
+    });
+
+    // 
+    if (res.status === 404) {
+        const results = await Promise.allSettled(
+            drafts.map(d => fetch(`${API_BASE}/issues/create/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(d)
+            }))
+        );
+        if (results.some(r => r.status === "rejected" || !r.value.ok)) {
+            alert("Alguno de los issues no se creó correctamente"); return;
+        }
+    } else if (!res.ok) {
+        alert("Error al crear issues"); return;
+    }
+
+    drafts.length = 0;
+    renderDrafts();               // limpia la lista comprimida
+    modal.classList.remove("show");
+    form.reset();
+    await loadIssues();
+}
+
+                  
+
+function renderDrafts() {
+    const list = $("#draftsList");
+    list.innerHTML = "";
+    drafts.forEach((d, i) => {
+        const li = document.createElement("li");
+        li.innerHTML =
+            `<span title="${d.nombre}">${d.nombre}</span>
+             <button aria-label="Eliminar" onclick="removeDraft(${i})">&times;</button>`;
+        list.appendChild(li);
+    });
+}
+
+function removeDraft(idx) {
+    drafts.splice(idx, 1);
+    renderDrafts();
+}
