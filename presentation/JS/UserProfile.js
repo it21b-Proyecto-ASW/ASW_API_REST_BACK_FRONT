@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderIssues(issues, containerId) {
+    async function renderIssues(issues, containerId) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
 
@@ -384,14 +384,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        issues.forEach(issue => {
+        for (const issue of issues) {
             const issueElement = document.createElement('div');
             issueElement.className = 'issue-item';
 
-            // Determine status class based on estado
             let statusClass = 'status-default';
             if (issue.estado) {
-                // You might want to map estado IDs to status classes
                 statusClass = `status-${issue.estado}`;
             }
 
@@ -399,23 +397,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="issue-title">#${issue.id} - ${issue.nombre}</div>
                 <div class="issue-meta">
                     <div class="issue-meta-item">
-                        <i class="fas fa-tag"></i> ${issue.tipo || 'N/A'}
+                        <i class="fas fa-tag"></i> ${await getSettingName('tipos', issue.tipo)}
                     </div>
                     <div class="issue-meta-item">
-                        <i class="fas fa-bolt"></i> ${issue.severidad || 'N/A'}
+                        <i class="fas fa-bolt"></i> ${await getSettingName('severidades', issue.severidad)}
                     </div>
                     <div class="issue-meta-item">
-                        <i class="fas fa-flag"></i> ${issue.prioridad || 'N/A'}
+                        <i class="fas fa-flag"></i> ${await getSettingName('prioridades', issue.prioridad)}
                     </div>
                     <div class="issue-meta-item">
-                        <span class="issue-status ${statusClass}">${issue.estado || 'N/A'}</span>
+                        <span class="issue-status ${statusClass}">${await getSettingName('estados', issue.estado)}</span>
                     </div>
                 </div>
                 <div class="issue-date">${formatDate(issue.dateModified)}</div>
             `;
 
             container.appendChild(issueElement);
-        });
+        }
     }
 
     function renderComments(comments) {
@@ -460,5 +458,19 @@ document.addEventListener('DOMContentLoaded', function() {
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    // Función para obtener el nombre de un setting por su ID
+    async function getSettingName(settingType, settingId) {
+        if (!settingId) return 'N/A';
+
+        try {
+            const settings = await apiRequest(`/settings/${settingType}`);
+            const setting = settings.find(s => s.id === settingId);
+            return setting ? setting.nombre : 'N/A';
+        } catch (error) {
+            console.error(`Error loading ${settingType}:`, error);
+            return 'N/A';
+        }
     }
 });
