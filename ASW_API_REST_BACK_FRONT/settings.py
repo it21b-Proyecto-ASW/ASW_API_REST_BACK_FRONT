@@ -25,7 +25,7 @@ SECRET_KEY = '24cc2a3a-0c48-449a-90b3-2dd19fc401e9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.onrender.com']
+ALLOWED_HOSTS = ['*']
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -56,6 +56,7 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/2.1/topics/http/middleware/
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -129,9 +130,33 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'presentation'),
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://aswapirestfrontsprint3.onrender.com",
-]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Configuración de Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Permite acceso sin autenticación
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],  # Elimina cualquier autenticación por defecto
+}
+
+# Configuración de drf-yasg (Swagger)
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
+            'type': 'basic'
+        }
+    },
+    'LOGIN_URL': None,  # Elimina el enlace de login
+    'LOGOUT_URL': None,  # Elimina el enlace de logout
+    'USE_SESSION_AUTH': False,  # Desactiva la autenticación por sesión
+}
+
+# Configuración CORS
+CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo/testing - ajusta para producción
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://editor.swagger.io",
+    "https://aswapirestfrontsprint3.onrender.com",
+    "http://localhost:8000",  # Opcional: para desarrollo local
+]

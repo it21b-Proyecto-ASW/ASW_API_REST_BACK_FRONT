@@ -1,1 +1,1 @@
-web: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application
+web: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application --workers 4

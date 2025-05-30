@@ -1,13 +1,15 @@
 services:
   - type: web
-    name: API_ASW
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application
+    name: your-app-name
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn ASW_API_REST_BACK_FRONT.wsgi:application --workers 4
     envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: ASW_API_REST_BACK_FRONT.settings
+      - key: PYTHON_VERSION
+        value: 3.11.6
       - key: SECRET_KEY
-        value: 24cc2a3a-0c48-449a-90b3-2dd19fc401e9
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
       - key: DEBUG
         value: "False"
