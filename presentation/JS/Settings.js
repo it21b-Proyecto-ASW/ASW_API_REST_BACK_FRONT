@@ -5,7 +5,6 @@ const api_getEstados = `${API_BASE}/settings/estados`
 const api_getPrioridades = `${API_BASE}/settings/prioridades`
 const api_getSeveridades = `${API_BASE}/settings/severidades`;
 
-
 (function () {
     var real = window.fetch.bind(window);
 
@@ -21,7 +20,6 @@ const api_getSeveridades = `${API_BASE}/settings/severidades`;
         return real(url, opts);
     };
 })();
-
 
 async function fetchJson(url, opts = {}) {
     const res = await fetch(url, opts);
@@ -57,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('currentUser');
         if (saved) {
             userDropdown.value = saved;
-
             localStorage.setItem('currentUserKey', usersCache[saved] || '');
         }
     }
@@ -70,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUsers();
 });
+
 /* ------------ Utilidades simples ---- */
 const $ = sel => document.querySelector(sel);
 const create = (tag, cls) => {
@@ -77,6 +75,29 @@ const create = (tag, cls) => {
     if (cls) el.className = cls;
     return el;
 };
+
+// Función mejorada para llenar selects con opción por defecto
+function fillSelect(selectSel, data, labelKey, valueKey, defaultText = "") {
+    const select = $(selectSel);
+    // Limpiar el select
+    select.innerHTML = "";
+
+    // Añadir opción por defecto si se proporciona
+    if (defaultText) {
+        const defaultOpt = create("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = defaultText;
+        select.appendChild(defaultOpt);
+    }
+
+    // Añadir las opciones de datos
+    data.forEach((item) => {
+        const opt = create("option");
+        opt.value = item[valueKey];
+        opt.textContent = item[labelKey];
+        select.appendChild(opt);
+    });
+}
 
 //inicio
 window.addEventListener("DOMContentLoaded", async () => {
@@ -86,312 +107,290 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadSeveridades();
 });
 
-
 //leer tipos
 async function loadTipos() {
     try {
-        const tipos = await Promise.resolve(fetch(api_getTipos).then(r => r.json()));
+        const tipos = await fetchJson(api_getTipos);
         console.log(tipos);
-        fillSelect("#tipo_a_eliminar", tipos, "nombre", "id");
-        fillSelect("#tipo_sustituto", tipos, "nombre", "id");
+        fillSelect("#tipo_a_eliminar", tipos, "nombre", "id", "Selecciona un tipo a eliminar");
+        fillSelect("#tipo_sustituto", tipos, "nombre", "id", "Selecciona un tipo de reemplazo");
     } catch (err) {
-        console.error("Error cargando filtros:", err);
+        console.error("Error cargando tipos:", err);
     }
-}
-
-function fillSelect(selectSel, data, labelKey, valueKey) {
-    const select = $(selectSel);
-    data.forEach((item) => {
-        const opt = create("option");
-        opt.value = (item)[valueKey];
-        opt.textContent = (item)[labelKey];
-        select.appendChild(opt);
-    });
 }
 
 //leer estados
 async function loadEstados() {
     try {
-        const estados = await Promise.resolve(fetch(api_getEstados).then(r => r.json()));
+        const estados = await fetchJson(api_getEstados);
         console.log(estados);
-        fillSelect("#estado_a_eliminar", estados, "nombre", "id");
-        fillSelect("#estado_sustituto", estados, "nombre", "id");
-
+        fillSelect("#estado_a_eliminar", estados, "nombre", "id", "Selecciona un estado a eliminar");
+        fillSelect("#estado_sustituto", estados, "nombre", "id", "Selecciona un estado de reemplazo");
     } catch (err) {
-        console.error("Error cargando filtros:", err);
+        console.error("Error cargando estados:", err);
     }
 }
 
-//leer prios
+//leer prioridades
 async function loadPrioridades() {
     try {
-
-        const prioridades = await Promise.resolve(fetch(api_getPrioridades).then(r => r.json()));
+        const prioridades = await fetchJson(api_getPrioridades);
         console.log(prioridades);
-        fillSelect("#prioridad_a_eliminar", prioridades, "nombre", "id");
-        fillSelect("#prioridad_sustituta", prioridades, "nombre", "id");
-
+        fillSelect("#prioridad_a_eliminar", prioridades, "nombre", "id", "Selecciona una prioridad a eliminar");
+        fillSelect("#prioridad_sustituta", prioridades, "nombre", "id", "Selecciona una prioridad de reemplazo");
     } catch (err) {
-        console.error("Error cargando filtros:", err);
+        console.error("Error cargando prioridades:", err);
     }
 }
 
-//leer sevs
+//leer severidades
 async function loadSeveridades() {
     try {
-
-        const severidades = await Promise.resolve(fetch(api_getSeveridades).then(r => r.json()));
+        const severidades = await fetchJson(api_getSeveridades);
         console.log(severidades);
-        fillSelect("#severidad_a_eliminar", severidades, "nombre", "id");
-        fillSelect("#severidad_sustituta", severidades, "nombre", "id");
-
+        fillSelect("#severidad_a_eliminar", severidades, "nombre", "id", "Selecciona una severidad a eliminar");
+        fillSelect("#severidad_sustituta", severidades, "nombre", "id", "Selecciona una severidad de reemplazo");
     } catch (err) {
-        console.error("Error cargando filtros:", err);
+        console.error("Error cargando severidades:", err);
     }
 }
 
-// Recarga los tipos en los dropdowns
+// ============= TIPOS =============
+
+// Refrescar tipos (ahora usa la función consistente)
 async function refrescarTipos() {
-    try {
-        const response = await fetch('/api/settings/tipos');
-        const tipos = await response.json();
-        const selectEliminar = document.getElementById('tipo_a_eliminar');
-        const selectSustituto = document.getElementById('tipo_sustituto');
-        selectEliminar.innerHTML = '<option value="">Selecciona un tipo a eliminar</option>';
-        selectSustituto.innerHTML = '<option value="">Selecciona un tipo de reemplazo</option>';
-        tipos.forEach(tipo => {
-            selectEliminar.innerHTML += `<option value="${tipo.id}">${tipo.nombre}</option>`;
-            selectSustituto.innerHTML += `<option value="${tipo.id}">${tipo.nombre}</option>`;
-        });
-    } catch (err) {
-        console.error('Error cargando tipos:', err);
-    }
+    await loadTipos();
 }
 
-//crear tipus
+//crear tipo
 async function crearTipo() {
     try {
         var nomT = document.getElementById("nom_tipo").value;
-        const res = await fetch(`${API_BASE}/settings/createtipo/`,
+        if (!nomT.trim()) {
+            alert("Por favor, ingresa un nombre para el tipo");
+            return;
+        }
 
-        {
+        const res = await fetchJson(`${API_BASE}/settings/createtipo/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomT})
-        }).then(res => res.json);
+        });
+
         document.getElementById("nom_tipo").value = "";
-        alert("se ha creado correctamente");
-        refrescarTipos();
+        alert("Se ha creado correctamente");
+        await refrescarTipos();
     } catch (err) {
         console.error("Error al crear:", err);
-    }
-}
-//eliminar tipus
-async function eliminarTipo() {
-    try {
-        var tipo = document.getElementById("tipo_a_eliminar").options.selectedIndex;
-        var setting_id = document.getElementById("tipo_a_eliminar").options.item(tipo).value;
-        if (document.getElementById("tipo_a_eliminar").options.length <= 1)
-            alert("No se puede eliminar el último tipo")
-        else {
-            const res = await fetch(`${API_BASE}/settings/${setting_id.toString()}/deletetipo/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
-            alert("se ha eliminado correctamente");
-            document.getElementById("tipo_a_eliminar").remove(tipo);
-            document.getElementById("tipo_sustituto").remove(tipo);
-            refrescarTipos();
-        }
-    } catch (err) {
-        console.error("Error al eliminar:", err);
+        alert("Error al crear el tipo: " + err.message);
     }
 }
 
-// Recarga las prioridades en los dropdowns
-async function refrescarPrioridades() {
+//eliminar tipo
+async function eliminarTipo() {
     try {
-        const response = await fetch('/api/settings/prioridades');
-        const prioridades = await response.json();
-        const selectEliminar = document.getElementById('prioridad_a_eliminar');
-        const selectSustituta = document.getElementById('prioridad_sustituta');
-        selectEliminar.innerHTML = '<option value="">Selecciona una prioridad a eliminar</option>';
-        selectSustituta.innerHTML = '<option value="">Selecciona una prioridad de reemplazo</option>';
-        prioridades.forEach(prio => {
-            selectEliminar.innerHTML += `<option value="${prio.id}">${prio.nombre}</option>`;
-            selectSustituta.innerHTML += `<option value="${prio.id}">${prio.nombre}</option>`;
+        var selectEliminar = document.getElementById("tipo_a_eliminar");
+        var setting_id = selectEliminar.value;
+
+        if (!setting_id) {
+            alert("Por favor, selecciona un tipo a eliminar");
+            return;
+        }
+
+        if (selectEliminar.options.length <= 2) { // 2 porque incluye la opción por defecto
+            alert("No se puede eliminar el último tipo");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/${setting_id}/deletetipo/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
         });
+
+        alert("Se ha eliminado correctamente");
+        await refrescarTipos();
     } catch (err) {
-        console.error('Error cargando prioridades:', err);
+        console.error("Error al eliminar:", err);
+        alert("Error al eliminar el tipo: " + err.message);
     }
+}
+
+// ============= PRIORIDADES =============
+
+// Refrescar prioridades (ahora usa la función consistente)
+async function refrescarPrioridades() {
+    await loadPrioridades();
 }
 
 //crear prioridad
 async function crearPrioridad() {
     try {
         var nomP = document.getElementById("nom_prio").value;
-        var select1 = document.getElementById("prioridad_a_eliminar");
-        var select2 = document.getElementById("prioridad_sustituta");
-        const res = await fetch(`${API_BASE}/settings/createprioridad/`,
-        {
+        if (!nomP.trim()) {
+            alert("Por favor, ingresa un nombre para la prioridad");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/createprioridad/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomP})
-        }).then(res => res.json);
+        });
 
         document.getElementById("nom_prio").value = "";
-        alert("se ha creado correctamente");
-        refrescarPrioridades();
+        alert("Se ha creado correctamente");
+        await refrescarPrioridades();
     } catch (err) {
         console.error("Error al crear:", err);
+        alert("Error al crear la prioridad: " + err.message);
     }
 }
 
 //eliminar prioridad
 async function eliminarPrioridad() {
     try {
-        var prio = document.getElementById("prioridad_a_eliminar").options.selectedIndex;
-        var setting_id = document.getElementById("prioridad_a_eliminar").options.item(prio).value;
-        if (document.getElementById("prioridad_a_eliminar").options.length <= 1)
-            alert("No se puede eliminar la última prioridad")
-        else {
-            const res = await fetch(`${API_BASE}/settings/${setting_id.toString()}/deleteprioridad/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+        var selectEliminar = document.getElementById("prioridad_a_eliminar");
+        var setting_id = selectEliminar.value;
 
-            alert("Se ha eliminado correctamente");
-            document.getElementById("prioridad_a_eliminar").remove(prio);
-            document.getElementById("prioridad_sustituta").remove(prio);
-            refrescarPrioridades();
+        if (!setting_id) {
+            alert("Por favor, selecciona una prioridad a eliminar");
+            return;
         }
+
+        if (selectEliminar.options.length <= 2) { // 2 porque incluye la opción por defecto
+            alert("No se puede eliminar la última prioridad");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/${setting_id}/deleteprioridad/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        alert("Se ha eliminado correctamente");
+        await refrescarPrioridades();
     } catch (err) {
         console.error("Error al eliminar:", err);
+        alert("Error al eliminar la prioridad: " + err.message);
     }
 }
 
-// Recarga los estados en los dropdowns
+// ============= ESTADOS =============
+
+// Refrescar estados (ahora usa la función consistente)
 async function refrescarEstados() {
-    try {
-        const response = await fetch('/api/settings/estados');
-        const estados = await response.json();
-        const selectEliminar = document.getElementById('estado_a_eliminar');
-        const selectSustituto = document.getElementById('estado_sustituto');
-        selectEliminar.innerHTML = '<option value="">Selecciona un estado a eliminar</option>';
-        selectSustituto.innerHTML = '<option value="">Selecciona un estado de reemplazo</option>';
-        estados.forEach(estado => {
-            selectEliminar.innerHTML += `<option value="${estado.id}">${estado.nombre}</option>`;
-            selectSustituto.innerHTML += `<option value="${estado.id}">${estado.nombre}</option>`;
-        });
-    } catch (err) {
-        console.error('Error cargando estados:', err);
-    }
+    await loadEstados();
 }
 
-//crear estatus
+//crear estado
 async function crearEstado() {
     try {
         var nomE = document.getElementById("nom_estado").value;
-        var select1 = document.getElementById("estado_a_eliminar");
-        var select2 = document.getElementById("estado_sustituto");
-        const res = await fetch(`${API_BASE}/settings/createestado/`,
-        {
+        if (!nomE.trim()) {
+            alert("Por favor, ingresa un nombre para el estado");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/createestado/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomE})
-        }).then(res => res.json);
-      
+        });
+
         document.getElementById("nom_estado").value = "";
-        alert("se ha creado correctamente");
-        refrescarEstados();
+        alert("Se ha creado correctamente");
+        await refrescarEstados();
     } catch (err) {
         console.error("Error al crear:", err);
+        alert("Error al crear el estado: " + err.message);
     }
 }
 
-//eliminar estatus
+//eliminar estado
 async function eliminarEstado() {
     try {
-        var estado = document.getElementById("estado_a_eliminar").options.selectedIndex;
-        var setting_id = document.getElementById("estado_a_eliminar").options.item(estado).value;
-        if (document.getElementById("estado_a_eliminar").options.length <= 1)
-            alert("No se puede eliminar el último estado")
-        else {
-            const res = await fetch(`${API_BASE}/settings/${setting_id.toString()}/deleteestado/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
-            alert("se ha eliminado correctamente");
-            document.getElementById("estado_a_eliminar").remove(estado);
-            document.getElementById("estado_sustituto").remove(estado);
-            refrescarEstados();
+        var selectEliminar = document.getElementById("estado_a_eliminar");
+        var setting_id = selectEliminar.value;
+
+        if (!setting_id) {
+            alert("Por favor, selecciona un estado a eliminar");
+            return;
         }
+
+        if (selectEliminar.options.length <= 2) { // 2 porque incluye la opción por defecto
+            alert("No se puede eliminar el último estado");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/${setting_id}/deleteestado/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        alert("Se ha eliminado correctamente");
+        await refrescarEstados();
     } catch (err) {
         console.error("Error al eliminar:", err);
+        alert("Error al eliminar el estado: " + err.message);
     }
 }
 
-// Cargar severidades al crear o eliminar
-function refrescarSeveridades() {
-    fetch('/api/settings/severidades')
-        .then(response => response.json())
-        .then(data => {
-            const selectEliminar = document.getElementById('severidad_a_eliminar');
-            const selectSustituta = document.getElementById('severidad_sustituta');
-            // Limpia las opciones actuales
-            selectEliminar.innerHTML = '<option value="">Selecciona una severitat a eliminar</option>';
-            selectSustituta.innerHTML = '<option value="">Selecciona una severitat de reemplaçament</option>';
-            // Añade las nuevas opciones
-            data.forEach(sev => {
-                selectEliminar.innerHTML += `<option value="${sev.id}">${sev.nombre}</option>`;
-                selectSustituta.innerHTML += `<option value="${sev.id}">${sev.nombre}</option>`;
-            });
-        });
+// ============= SEVERIDADES =============
+
+// Refrescar severidades (ahora usa la función consistente)
+async function refrescarSeveridades() {
+    await loadSeveridades();
 }
 
 //crear severidad
 async function crearSeveridad() {
     try {
         var nomS = document.getElementById("nom_sev").value;
-        var select1 = document.getElementById("severidad_a_eliminar");
-        var select2 = document.getElementById("severidad_sustituta");
-        const res = await fetch(`${API_BASE}/settings/createseveridad/`,
-        {
+        if (!nomS.trim()) {
+            alert("Por favor, ingresa un nombre para la severidad");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/createseveridad/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({nombre: nomS})
-        }).then(res => res.json);
+        });
+
         document.getElementById("nom_sev").value = "";
-        alert("se ha creado correctamente");
-        refrescarSeveridades();
+        alert("Se ha creado correctamente");
+        await refrescarSeveridades();
     } catch (err) {
         console.error("Error al crear:", err);
+        alert("Error al crear la severidad: " + err.message);
     }
 }
 
 //eliminar severidad
 async function eliminarSeveridad() {
     try {
-        var sev = document.getElementById("severidad_a_eliminar").options.selectedIndex;
-        var setting_id = document.getElementById("severidad_a_eliminar").options.item(sev).value;
-        if (document.getElementById("severidad_a_eliminar").options.length <= 2)
-            alert("No se puede eliminar la última severidad")
-        else {
-            const res = await fetch(`${API_BASE}/settings/${setting_id.toString()}/deleteseveridad/`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }).then(res => res.json);
+        var selectEliminar = document.getElementById("severidad_a_eliminar");
+        var setting_id = selectEliminar.value;
 
-            alert("se ha eliminado correctamente");
-            document.getElementById("severidad_a_eliminar").remove(sev);
-            document.getElementById("severidad_sustituta").remove(sev);
-            refrescarSeveridades();
+        if (!setting_id) {
+            alert("Por favor, selecciona una severidad a eliminar");
+            return;
         }
+
+        if (selectEliminar.options.length <= 2) { // 2 porque incluye la opción por defecto
+            alert("No se puede eliminar la última severidad");
+            return;
+        }
+
+        const res = await fetchJson(`${API_BASE}/settings/${setting_id}/deleteseveridad/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        alert("Se ha eliminado correctamente");
+        await refrescarSeveridades();
     } catch (err) {
         console.error("Error al eliminar:", err);
+        alert("Error al eliminar la severidad: " + err.message);
     }
 }
