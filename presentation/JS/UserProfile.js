@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Configuration
-    const API_BASE_URL = 'http://localhost:8000/api';
+    const API_BASE_URL = "/api";
 
     // DOM elements
     const tabButtons = document.querySelectorAll('.tab-btn');

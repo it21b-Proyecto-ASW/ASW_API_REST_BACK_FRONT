@@ -1,11 +1,65 @@
 /* ------------ Config ---------------- */
 // TODO: Sustituye por la URL base real de tu API
-const API_BASE = "http://127.0.0.1:8000/api/settings/";
-const api_getTipos = "http://127.0.0.1:8000/api/settings/tipos"
-const api_getEstados = "http://127.0.0.1:8000/api/settings/estados"
-const api_getPrioridades = "http://127.0.0.1:8000/api/settings/prioridades"
-const api_getSeveridades = "http://127.0.0.1:8000/api/settings/severidades"
+const API_BASE = "/api";
+const api_getTipos = `${API_BASE}/settings/tipos`
+const api_getEstados = `${API_BASE}/settings/estados`
+const api_getPrioridades = `${API_BASE}/settings/prioridades`
+const api_getSeveridades = `${API_BASE}/settings/severidades`
 
+
+/* -------- NAVBAR -------------------- */
+document.addEventListener('DOMContentLoaded', function() {
+    const userDropdown = document.getElementById('user-dropdown');
+
+    // Load users from API
+    async function loadUsers() {
+        try {
+            const response = await fetch(`${API_BASE}/users`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch users');
+            }
+
+            const users = await response.json();
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.nombre;
+                userDropdown.appendChild(option);
+            });
+
+            // Set current user if exists
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                userDropdown.value = currentUser;
+            }
+
+        } catch (error) {
+            console.error('Error loading users:', error);
+            userDropdown.innerHTML = '<option value="">Error loading users</option>';
+        }
+    }
+
+    // Handle user selection change
+    userDropdown.addEventListener('change', function() {
+        const selectedUser = this.value;
+        if (selectedUser) {
+            localStorage.setItem('currentUser', selectedUser);
+        }
+    });
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+    }
+
+    // Initialize
+    loadUsers();
+});
 
 /* ------------ Utilidades simples ---- */
 const $ = sel => document.querySelector(sel);

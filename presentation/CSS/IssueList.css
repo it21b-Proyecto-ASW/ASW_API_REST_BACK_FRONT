@@ -11,7 +11,7 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
 }
 
-/* ----------  Reset básico  ---------- */
+/* ----------  Reset bï¿½sico  ---------- */
 *,
 *::before,
 *::after {
@@ -28,46 +28,84 @@ body {
 
 /* ----------  Navbar  ---------- */
 .navbar {
+    background-color: #fff;
+    border-bottom: 1px solid #e1e1e1;
+    padding: 1rem 2rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: #222;
-    color: #fff;
-    padding: .6rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .brand {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-right: 2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0d6efd;
+    margin-right: 4rem;
 }
 
 .nav-links {
-    list-style: none;
     display: flex;
-    gap: 1.2rem;
-    padding: 0;
-    margin: 0;
+    list-style: none;
+    gap: 2rem;
+    align-items: center;
 }
 
-    .nav-links.right {
-        margin-left: auto;
-    }
+.nav-links.right {
+    margin-left: auto;
+}
 
-.navbar a,
-.link-btn {
-    color: #fff;
+.nav-links a {
     text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #0d6efd;
+}
+
+.link-btn {
     background: none;
     border: none;
+    color: #333;
+    font-weight: 500;
     cursor: pointer;
-    font: inherit;
+    font-size: 1rem;
+    transition: color 0.3s;
 }
 
-    .navbar a:hover,
-    .link-btn:hover {
-        opacity: .8;
-    }
+.link-btn:hover {
+    color: #0d6efd;
+}
+
+.user-selector-nav {
+    display: flex;
+    align-items: center;
+}
+
+.user-selector-nav select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    color: #333;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s;
+    min-width: 150px;
+}
+
+.user-selector-nav select:hover {
+    border-color: #0d6efd;
+    background-color: #fff;
+}
+
+.user-selector-nav select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
 
 /* ----------  Contenedor principal  ---------- */
 .container {
@@ -320,7 +358,7 @@ h1 {
 
 
 
-/* ----------  Responsive pequeño  ---------- */
+/* ----------  Responsive pequeï¿½o  ---------- */
 @media (max-width: 480px) {
     .filters {
         grid-template-columns: 1fr 1fr;
