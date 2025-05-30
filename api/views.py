@@ -310,7 +310,7 @@ def add_file_to_issue(request, issue_id: int):
 def delete_file_from_issue(request, file_id: int):
     """Elimina el IssueAttachment y la imagen asociada."""
     pivot = get_object_or_404(IssueAttachment, pk=file_id)
-    # borra primero el archivo físico
+
     pivot.image.file.delete(save=False)
     pivot.image.delete()
     pivot.delete()
